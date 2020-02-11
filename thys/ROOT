@@ -1,0 +1,10 @@
+chapter ICALP20
+
+session ICALP20 = HOL +
+  theories
+    Computation
+    Sufficient
+    Example_Sufficient
+    Necessary
+    Example_Necessary
+    Undecidable
