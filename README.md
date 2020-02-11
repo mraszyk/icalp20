@@ -1,16 +1,12 @@
-## From Functional Nondeterministic Transducers to Deterministic Two-Tape Automata
+# From Functional Nondeterministic Transducers to Deterministic Two-Tape Automata
 
----
-
-# Directory Structure:
+## Directory Structure:
 
 `html/` contains the generated HTML page of the formalization in Isabelle
 
 `thys/` contains the formalization of the paper in Isabelle
 
----
-
-# Formalization in Isabelle
+## Formalization in Isabelle
 
 The formal development can be browsed as a generated HTML page (see the html directory).
 A better way to study the theory files, however, is to open them in Isabelle/jEdit.
