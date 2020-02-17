@@ -557,7 +557,7 @@ interpretation nec: necessary' ninit n\<delta> naccept nQ otdfa_init otdfa_delta
   using functional
   by unfold_locales (auto simp add: equiv tdfa_equiv_otdfa)
 
-(* Theorem 10 *)
+(* Theorem 9 *)
 
 lemma bounded: "\<exists>K. fnft.bounded K"
   using nec.bounded .

@@ -107,7 +107,7 @@
 </span><span>
 </span><span class="keyword2"><span class="keyword">end</span></span><span>
 </span><span>
-</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Definition 12 *)</span></span></span></span></span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Definition 11 *)</span></span></span></span></span><span>
 </span><span>
 </span><span class="keyword1"><span class="command">locale</span></span><span> </span><span>TM</span><span> </span><span class="delimiter">=</span><span>
 </span><span>  </span><span class="keyword2"><span class="keyword">fixes</span></span><span> </span><span>init</span><span> </span><span class="delimiter">::</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#39;s :: finite&quot;</span></span></span><span>
@@ -1379,12 +1379,12 @@
 </span><span>
 </span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* main results *)</span></span></span></span></span><span>
 </span><span>
-</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Claim 15 *)</span></span></span></span></span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Claim 14 *)</span></span></span></span></span><span>
 </span><span class="keyword1"><span class="command">interpretation</span></span><span> </span><span>fNFT</span><span> </span><span>Init</span><span> </span><span>nft_step</span><span> </span><span>nft_accept</span><span> </span><span>UNIV</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>functional</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>unfold_locales</span><span> </span><span>assumption</span><span>
 </span><span>
-</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Claim 16 *)</span></span></span></span></span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Claim 15 *)</span></span></span></span></span><span>
 </span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>unbounded_iff_reachable</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#172;(&#8707;K. nft.bounded K) &#10231; (&#8704;n. &#8707;cs. reachable cs &#8743; length cs &#8805; n)&quot;</span></span></span><span>
 </span><span>  </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>reachable_then_unbounded</span><span> </span><span>unbounded_then_reachable</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>auto</span><span>

@@ -2,7 +2,7 @@ theory Example_Sufficient
   imports Sufficient
 begin
 
-(* Example 8 *)
+(* Example 7 *)
 
 datatype states = q0 | q1 | q2 | q3 | qf
 
@@ -34,7 +34,7 @@ qed
 
 end
 
-(* Figure 2 *)
+(* Figure 2a *)
 
 inductive delta :: "states \<Rightarrow> Sigma \<Rightarrow> states \<times> Sigma list \<Rightarrow> bool" where
   "delta q0 a (q1, [a, b, a])"
@@ -198,7 +198,7 @@ qed
 lemma K': "K' = 5"
   unfolding K'_def output_speed by auto
 
-(* Figure 3 *)
+(* Figure 2b *)
 
 lemma step_1: "tdfa_step tdfa_init (Symb a, Symb a) (Some ([a], {(q0, 0)}), False, True)"
   "Some ([a], {(q0, 0)}) \<in> tdfa_Q"

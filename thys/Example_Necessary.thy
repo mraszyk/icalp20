@@ -2,7 +2,7 @@ theory Example_Necessary
   imports Computation
 begin
 
-(* Example 11 *)
+(* Example 10 *)
 
 datatype states = Init | Copy bool | Skip bool | Check bool | Accept
 

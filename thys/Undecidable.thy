@@ -90,7 +90,7 @@ qed
 
 end
 
-(* Definition 12 *)
+(* Definition 11 *)
 
 locale TM =
   fixes init :: "'s :: finite"
@@ -1362,12 +1362,12 @@ qed
 
 (* main results *)
 
-(* Claim 15 *)
+(* Claim 14 *)
 interpretation fNFT Init nft_step nft_accept UNIV
   using functional
   by unfold_locales assumption
 
-(* Claim 16 *)
+(* Claim 15 *)
 lemma unbounded_iff_reachable: "\<not>(\<exists>K. nft.bounded K) \<longleftrightarrow> (\<forall>n. \<exists>cs. reachable cs \<and> length cs \<ge> n)"
   using reachable_then_unbounded unbounded_then_reachable
   by auto

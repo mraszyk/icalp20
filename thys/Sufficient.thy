@@ -709,7 +709,7 @@ lemma \<tau>_sub_tdfa_\<tau>: "\<tau> \<subseteq> tdfa.\<tau>"
 
 (* main result *)
 
-(* Theorem 9 *)
+(* Theorem 8 *)
 lemma tdfa_correct: "\<tau> = tdfa.\<tau>"
   using tdfa_\<tau>_sub_\<tau> \<tau>_sub_tdfa_\<tau> by auto
 

@@ -127,7 +127,7 @@ definition \<tau> :: "('a list \<times> 'b list) set" where
 
 end
 
-(* TDFA moving exactly one head in every step used in the proof of Theorem 10 *)
+(* TDFA moving exactly one head in every step used in the proof of Theorem 9 *)
 
 locale oTDFA = TDFA init \<delta> accept Q
   for init :: "'s"

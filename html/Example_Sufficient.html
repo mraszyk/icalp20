@@ -19,7 +19,7 @@
 </span><span>  </span><span class="keyword2"><span class="keyword">imports</span></span><span> </span><span>Sufficient</span><span>
 </span><span class="keyword2"><span class="keyword">begin</span></span><span>
 </span><span>
-</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Example 8 *)</span></span></span></span></span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Example 7 *)</span></span></span></span></span><span>
 </span><span>
 </span><span class="keyword1"><span class="command">datatype</span></span><span> </span><span>states</span><span> </span><span class="delimiter">=</span><span> </span><span>q0</span><span> </span><span class="delimiter">|</span><span> </span><span>q1</span><span> </span><span class="delimiter">|</span><span> </span><span>q2</span><span> </span><span class="delimiter">|</span><span> </span><span>q3</span><span> </span><span class="delimiter">|</span><span> </span><span>qf</span><span>
 </span><span>
@@ -51,7 +51,7 @@
 </span><span>
 </span><span class="keyword2"><span class="keyword">end</span></span><span>
 </span><span>
-</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Figure 2 *)</span></span></span></span></span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Figure 2a *)</span></span></span></span></span><span>
 </span><span>
 </span><span class="keyword1"><span class="command">inductive</span></span><span> </span><span>delta</span><span> </span><span class="delimiter">::</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;states &#8658; Sigma &#8658; states &#215; Sigma list &#8658; bool&quot;</span></span></span><span> </span><span class="keyword2"><span class="keyword">where</span></span><span>
 </span><span>  </span><span class="string"><span class="delete"><span class="delete">&quot;delta q0 a (q1, [a, b, a])&quot;</span></span></span><span>
@@ -215,7 +215,7 @@
 </span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>K&#39;</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;K&#39; = 5&quot;</span></span></span><span>
 </span><span>  </span><span class="keyword1"><span class="command">unfolding</span></span><span> </span><span>K&#39;_def</span><span> </span><span>output_speed</span><span> </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>auto</span><span>
 </span><span>
-</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Figure 3 *)</span></span></span></span></span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Figure 2b *)</span></span></span></span></span><span>
 </span><span>
 </span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>step_1</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;tdfa_step tdfa_init (Symb a, Symb a) (Some ([a], {(q0, 0)}), False, True)&quot;</span></span></span><span>
 </span><span>  </span><span class="string"><span class="delete"><span class="delete">&quot;Some ([a], {(q0, 0)}) &#8712; tdfa_Q&quot;</span></span></span><span>
