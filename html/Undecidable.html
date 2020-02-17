@@ -19,23 +19,24 @@
 </span><span>  </span><span class="keyword2"><span class="keyword">imports</span></span><span> </span><span>Computation</span><span>
 </span><span class="keyword2"><span class="keyword">begin</span></span><span>
 </span><span>
-</span><span class="keyword1"><span class="command">datatype</span></span><span> </span><span class="tfree">&#39;a</span><span> </span><span>TAl</span><span> </span><span class="delimiter">=</span><span> </span><span>Blank</span><span> </span><span class="delimiter">|</span><span> </span><span>TSymb</span><span> </span><span class="tfree">&#39;a</span><span>
-</span><span class="keyword1"><span class="command">datatype</span></span><span> </span><span class="delimiter">(</span><span class="tfree">&#39;a</span><span class="delimiter">,</span><span> </span><span class="tfree">&#39;s</span><span class="delimiter">)</span><span> </span><span>TCell</span><span> </span><span class="delimiter">=</span><span> </span><span>Head</span><span> </span><span class="tfree">&#39;s</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#39;a TAl&quot;</span></span></span><span> </span><span class="delimiter">|</span><span> </span><span>Just</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#39;a&quot;</span></span></span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Turing machine definitions *)</span></span></span></span></span><span>
+</span><span>
+</span><span class="keyword1"><span class="command">datatype</span></span><span> </span><span class="delimiter">(</span><span class="tfree">&#39;a</span><span class="delimiter">,</span><span> </span><span class="tfree">&#39;s</span><span class="delimiter">)</span><span> </span><span>TCell</span><span> </span><span class="delimiter">=</span><span> </span><span>Head</span><span> </span><span class="tfree">&#39;s</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#39;a Al&quot;</span></span></span><span> </span><span class="delimiter">|</span><span> </span><span>Just</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#39;a&quot;</span></span></span><span>
 </span><span class="keyword1"><span class="command">datatype</span></span><span> </span><span>Move</span><span> </span><span class="delimiter">=</span><span> </span><span>Left</span><span> </span><span class="delimiter">|</span><span> </span><span>Right</span><span>
 </span><span>
-</span><span class="keyword1"><span class="command">instantiation</span></span><span> </span><span>TAl</span><span> </span><span class="delimiter">::</span><span> </span><span class="delimiter">(</span><span>finite</span><span class="delimiter">)</span><span> </span><span>finite</span><span>
+</span><span class="keyword1"><span class="command">instantiation</span></span><span> </span><span>Al</span><span> </span><span class="delimiter">::</span><span> </span><span class="delimiter">(</span><span>finite</span><span class="delimiter">)</span><span> </span><span>finite</span><span>
 </span><span class="keyword2"><span class="keyword">begin</span></span><span>
 </span><span>
 </span><span class="keyword1"><span class="command">instance</span></span><span>
 </span><span class="keyword1"><span class="command">proof</span></span><span> </span><span class="delimiter">(</span><span>standard</span><span class="delimiter">)</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">have</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;finite (UNIV :: &#39;a :: finite set)&quot;</span></span></span><span>
 </span><span>    </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>finite_UNIV</span><span> </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>auto</span><span>
-</span><span>  </span><span class="keyword1"><span class="command">moreover</span></span><span> </span><span class="keyword1"><span class="command">have</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;(UNIV :: &#39;a :: finite TAl set) &#8838; {Blank} &#8746; TSymb ` UNIV&quot;</span></span></span><span>
+</span><span>  </span><span class="keyword1"><span class="command">moreover</span></span><span> </span><span class="keyword1"><span class="command">have</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;(UNIV :: &#39;a :: finite Al set) &#8838; {Blank} &#8746; Symb ` UNIV&quot;</span></span></span><span>
 </span><span>    </span><span class="keyword1"><span class="command"><span class="improper"><span class="command">apply</span></span></span></span><span> </span><span class="delimiter">(</span><span>rule</span><span> </span><span>subsetI</span><span class="delimiter">)</span><span>
 </span><span>    </span><span class="keyword1"><span class="command"><span class="improper"><span class="command">subgoal</span></span></span></span><span> </span><span class="keyword2"><span class="keyword">for</span></span><span> </span><span>x</span><span>
 </span><span>      </span><span class="keyword1"><span class="command">by</span></span><span> </span><span class="delimiter">(</span><span>cases</span><span> </span><span>x</span><span class="delimiter">)</span><span> </span><span>auto</span><span>
 </span><span>    </span><span class="keyword1"><span class="command"><span class="improper"><span class="command">done</span></span></span></span><span>
-</span><span>  </span><span class="keyword1"><span class="command">ultimately</span></span><span> </span><span class="keyword3"><span class="command">show</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;finite (UNIV :: &#39;a :: finite TAl set)&quot;</span></span></span><span>
+</span><span>  </span><span class="keyword1"><span class="command">ultimately</span></span><span> </span><span class="keyword3"><span class="command">show</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;finite (UNIV :: &#39;a :: finite Al set)&quot;</span></span></span><span>
 </span><span>    </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>finite_subset</span><span> </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>fastforce</span><span>
 </span><span class="keyword1"><span class="command">qed</span></span><span>
 </span><span>
@@ -47,7 +48,7 @@
 </span><span class="keyword1"><span class="command">instance</span></span><span>
 </span><span class="keyword1"><span class="command">proof</span></span><span> </span><span class="delimiter">(</span><span>standard</span><span class="delimiter">)</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">have</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;finite (UNIV :: &#39;a :: finite set)&quot;</span></span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;finite ((UNIV :: &#39;s :: finite set) &#215;
-    (UNIV :: (&#39;a :: finite) TAl set))&quot;</span></span></span><span>
+    (UNIV :: (&#39;a :: finite) Al set))&quot;</span></span></span><span>
 </span><span>    </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>finite_UNIV</span><span> </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>auto</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">moreover</span></span><span> </span><span class="keyword1"><span class="command">have</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;(UNIV :: (&#39;a :: finite, &#39;s :: finite) TCell set) &#8838;
     (&#955;(x, y). Head x y) ` (UNIV &#215; UNIV) &#8746; Just ` UNIV&quot;</span></span></span><span>
@@ -60,6 +61,8 @@
 </span><span class="keyword1"><span class="command">qed</span></span><span>
 </span><span>
 </span><span class="keyword2"><span class="keyword">end</span></span><span>
+</span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* NFT definitions *)</span></span></span></span></span><span>
 </span><span>
 </span><span class="keyword1"><span class="command">datatype</span></span><span> </span><span class="delimiter">(</span><span class="tfree">&#39;a</span><span class="delimiter">,</span><span> </span><span class="tfree">&#39;s</span><span class="delimiter">)</span><span> </span><span>Cell</span><span> </span><span class="delimiter">=</span><span> </span><span>Conf</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;(&#39;a, &#39;s) TCell&quot;</span></span></span><span> </span><span class="delimiter">|</span><span> </span><span>Sep</span><span> </span><span class="delimiter">|</span><span> </span><span>End_Copy</span><span> </span><span class="delimiter">|</span><span> </span><span>End_Sim</span><span>
 </span><span>
@@ -104,9 +107,11 @@
 </span><span>
 </span><span class="keyword2"><span class="keyword">end</span></span><span>
 </span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Definition 12 *)</span></span></span></span></span><span>
+</span><span>
 </span><span class="keyword1"><span class="command">locale</span></span><span> </span><span>TM</span><span> </span><span class="delimiter">=</span><span>
 </span><span>  </span><span class="keyword2"><span class="keyword">fixes</span></span><span> </span><span>init</span><span> </span><span class="delimiter">::</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#39;s :: finite&quot;</span></span></span><span>
-</span><span>    </span><span class="keyword2"><span class="keyword">and</span></span><span> </span><span>step</span><span> </span><span class="delimiter">::</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#39;s &#8658; &#39;a :: finite TAl &#8658; (&#39;s &#215; &#39;a &#215; Move) option&quot;</span></span></span><span>
+</span><span>    </span><span class="keyword2"><span class="keyword">and</span></span><span> </span><span>step</span><span> </span><span class="delimiter">::</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#39;s &#8658; &#39;a :: finite Al &#8658; (&#39;s &#215; &#39;a &#215; Move) option&quot;</span></span></span><span>
 </span><span>    </span><span class="keyword2"><span class="keyword">and</span></span><span> </span><span>accept</span><span> </span><span class="delimiter">::</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#39;s &#8658; bool&quot;</span></span></span><span>
 </span><span class="keyword2"><span class="keyword">begin</span></span><span>
 </span><span>
@@ -117,14 +122,16 @@
     (map Just as @ [Just a&#39;, Head s&#39; Blank])&quot;</span></span></span><span>
 </span><span class="delimiter">|</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#172;accept s &#10233; step s ta = Some (s&#39;, a&#39;, Left) &#10233;
     TM_step (map Just as @ [Just a, Head s ta] @ map Just as&#39;)
-    (map Just as @ [Head s&#39; (TSymb a), Just a&#39;] @ map Just as&#39;)&quot;</span></span></span><span>
+    (map Just as @ [Head s&#39; (Symb a), Just a&#39;] @ map Just as&#39;)&quot;</span></span></span><span>
 </span><span class="delimiter">|</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#172;accept s &#10233; step s ta = Some (s&#39;, a&#39;, Right) &#10233;
     TM_step (map Just as @ [Head s ta, Just a] @ map Just as&#39;)
-    (map Just as @ [Just a&#39;, Head s&#39; (TSymb a)] @ map Just as&#39;)&quot;</span></span></span><span>
+    (map Just as @ [Just a&#39;, Head s&#39; (Symb a)] @ map Just as&#39;)&quot;</span></span></span><span>
 </span><span>
 </span><span class="keyword1"><span class="command">inductive</span></span><span> </span><span>reachable</span><span> </span><span class="delimiter">::</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;(&#39;a, &#39;s) TCell list &#8658; bool&quot;</span></span></span><span> </span><span class="keyword2"><span class="keyword">where</span></span><span>
 </span><span>  </span><span class="string"><span class="delete"><span class="delete">&quot;reachable [Head init Blank]&quot;</span></span></span><span>
 </span><span class="delimiter">|</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;reachable cs &#10233; TM_step cs cs&#39; &#10233; reachable cs&#39;&quot;</span></span></span><span>
+</span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* NFT definitions *)</span></span></span></span></span><span>
 </span><span>
 </span><span class="keyword1"><span class="command">inductive</span></span><span> </span><span>nft_step</span><span> </span><span class="delimiter">::</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;(&#39;a, &#39;s) NState &#8658; (&#39;a, &#39;s) Cell &#8658;
   (&#39;a, &#39;s) NState &#215; (&#39;a, &#39;s) Cell list &#8658; bool&quot;</span></span></span><span> </span><span class="keyword2"><span class="keyword">where</span></span><span>
@@ -141,11 +148,11 @@
     (PostStep (Some s&#39;), [Conf (Just a&#39;)])&quot;</span></span></span><span>
 </span><span class="delimiter">|</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#172;accept s &#10233; step s ta = Some (s&#39;, a&#39;, Left) &#10233;
     nft_step (PreStep (Some a)) (Conf (Head s ta))
-    (PostStep None, [Conf (Head s&#39; (TSymb a)), Conf (Just a&#39;)])&quot;</span></span></span><span>
+    (PostStep None, [Conf (Head s&#39; (Symb a)), Conf (Just a&#39;)])&quot;</span></span></span><span>
 </span><span class="delimiter">|</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#172;accept s &#10233; step s ta = Some (s&#39;, a&#39;, Right) &#10233;
     nft_step (PreStep (Some a)) (Conf (Head s ta))
     (PostStep (Some s&#39;), [Conf (Just a), Conf (Just a&#39;)])&quot;</span></span></span><span>
-</span><span class="delimiter">|</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;nft_step (PostStep (Some s&#39;)) (Conf (Just a)) (PostStep None, [Conf (Head s&#39; (TSymb a))])&quot;</span></span></span><span>
+</span><span class="delimiter">|</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;nft_step (PostStep (Some s&#39;)) (Conf (Just a)) (PostStep None, [Conf (Head s&#39; (Symb a))])&quot;</span></span></span><span>
 </span><span class="delimiter">|</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;nft_step (PostStep None) (Conf (Just a)) (PostStep None, [Conf (Just a)])&quot;</span></span></span><span>
 </span><span class="delimiter">|</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;nft_step (PostStep (Some s&#39;)) Sep (PreStep None, [Conf (Head s&#39; Blank), Sep])&quot;</span></span></span><span>
 </span><span class="delimiter">|</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;nft_step (PostStep None) Sep (PreStep None, [Sep])&quot;</span></span></span><span>
@@ -344,7 +351,7 @@
 </span><span>    </span><span class="keyword1"><span class="command">by</span></span><span> </span><span class="delimiter">(</span><span>fastforce</span><span> </span><span>simp</span><span> </span><span>add</span><span class="delimiter">:</span><span> </span><span>nft.bounded_def</span><span class="delimiter">)</span><span>
 </span><span class="keyword1"><span class="command">qed</span></span><span>
 </span><span>
-</span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>reachable_then_unbounded</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#8704;n. &#8707;cs. reachable cs &#8743; length cs &#8805; n &#10233; &#8704;K. &#172;nft.bounded K&quot;</span></span></span><span>
+</span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>reachable_then_unbounded</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#8704;n. &#8707;cs. reachable cs &#8743; length cs &#8805; n &#10233; &#172;(&#8707;K. nft.bounded K)&quot;</span></span></span><span>
 </span><span>  </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>reachable_unbounded</span><span> </span><span>nft.bounded_mono</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>auto</span><span>
 </span><span>
@@ -483,7 +490,7 @@
 </span><span>            </span><span class="keyword1"><span class="command">by</span></span><span> </span><span class="delimiter">(</span><span>auto</span><span> </span><span>simp</span><span> </span><span>add</span><span class="delimiter">:</span><span> </span><span>ds_def</span><span> </span><span>zs_def</span><span class="delimiter">)</span><span>
 </span><span>        </span><span class="keyword1"><span class="command">next</span></span><span>
 </span><span>          </span><span class="keyword3"><span class="command">case</span></span><span> </span><span class="delimiter">(</span><span>Some</span><span> </span><span>a</span><span class="delimiter">)</span><span>
-</span><span>          </span><span class="keyword1"><span class="command">then</span></span><span> </span><span class="keyword1"><span class="command">have</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;cs&#39; = [(Head s&#39; (TSymb a)), (Just a&#39;)] @ ds&quot;</span></span></span><span>
+</span><span>          </span><span class="keyword1"><span class="command">then</span></span><span> </span><span class="keyword1"><span class="command">have</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;cs&#39; = [(Head s&#39; (Symb a)), (Just a&#39;)] @ ds&quot;</span></span></span><span>
 </span><span>            </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>step</span><span> </span><span>Conf</span><span> </span><span>Head</span><span> </span><span>Left</span><span> </span><span>TM_step</span><span>
 </span><span>            </span><span class="keyword1"><span class="command">by</span></span><span> </span><span class="delimiter">(</span><span>auto</span><span> </span><span>simp</span><span> </span><span>add</span><span class="delimiter">:</span><span> </span><span>comp_def</span><span> </span><span>zs_def</span><span> </span><span>map_Conf</span><span> </span><span>elim</span><span class="delimiter">!</span><span class="delimiter">:</span><span> </span><span>nft_step.cases</span><span class="delimiter">)</span><span>
 </span><span>          </span><span class="keyword1"><span class="command">then</span></span><span> </span><span class="keyword3"><span class="command">show</span></span><span> </span><span class="var">?thesis</span><span>
@@ -521,14 +528,14 @@
 </span><span>          </span><span class="keyword3"><span class="command">obtain</span></span><span> </span><span>a&#39;&#39;</span><span> </span><span>zs</span><span> </span><span class="keyword2"><span class="keyword">where</span></span><span> </span><span>zs_def</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;e = Just a&#39;&#39;&quot;</span></span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;es = map Just zs&quot;</span></span></span><span>
 </span><span>            </span><span class="string"><span class="delete"><span class="delete">&quot;nft.computation (PostStep None) (map Conf es @ [Sep], map (Conf &#8728; Just) zs @ [Sep])
             (PreStep None)&quot;</span></span></span><span>
-</span><span>            </span><span class="string"><span class="delete"><span class="delete">&quot;bs&#39; = Conf (Head s&#39; (TSymb a&#39;&#39;)) # map (Conf &#8728; Just) zs @ [Sep]&quot;</span></span></span><span>
+</span><span>            </span><span class="string"><span class="delete"><span class="delete">&quot;bs&#39; = Conf (Head s&#39; (Symb a&#39;&#39;)) # map (Conf &#8728; Just) zs @ [Sep]&quot;</span></span></span><span>
 </span><span>            </span><span class="keyword1"><span class="command"><span class="improper"><span class="command">apply</span></span></span></span><span> </span><span class="delimiter">(</span><span>rule</span><span> </span><span>nft.computation.cases</span><span class="delimiter">[</span><span>OF</span><span> </span><span>step</span><span class="delimiter">(</span><span>2</span><span class="delimiter">)</span><span class="delimiter">]</span><span class="delimiter">)</span><span>
 </span><span>            </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>q&#39;_def</span><span> </span><span>ds_def</span><span> </span><span>Cons</span><span> </span><span>step</span><span class="delimiter">(</span><span>7</span><span class="delimiter">)</span><span> </span><span>PostStep_None</span><span>
 </span><span>            </span><span class="keyword1"><span class="command">by</span></span><span> </span><span class="delimiter">(</span><span>auto</span><span> </span><span>elim</span><span class="delimiter">!</span><span class="delimiter">:</span><span> </span><span>nft_step.cases</span><span> </span><span>dest</span><span class="delimiter">!</span><span class="delimiter">:</span><span> </span><span>PostStep_None_PreStep_None</span><span class="delimiter">)</span><span>
 </span><span>          </span><span class="keyword1"><span class="command">then</span></span><span> </span><span class="keyword3"><span class="command">show</span></span><span> </span><span class="var">?thesis</span><span>
 </span><span>          </span><span class="keyword1"><span class="command">proof</span></span><span> </span><span class="delimiter">(</span><span>cases</span><span> </span><span>x</span><span class="delimiter">)</span><span>
 </span><span>            </span><span class="keyword3"><span class="command">case</span></span><span> </span><span>None</span><span>
-</span><span>            </span><span class="keyword1"><span class="command">then</span></span><span> </span><span class="keyword1"><span class="command">have</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;cs&#39; = [Just a&#39;, (Head s&#39; (TSymb a&#39;&#39;))] @ es&quot;</span></span></span><span>
+</span><span>            </span><span class="keyword1"><span class="command">then</span></span><span> </span><span class="keyword1"><span class="command">have</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;cs&#39; = [Just a&#39;, (Head s&#39; (Symb a&#39;&#39;))] @ es&quot;</span></span></span><span>
 </span><span>              </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>step</span><span> </span><span>Conf</span><span> </span><span>Head</span><span> </span><span>Right</span><span> </span><span>Cons</span><span> </span><span>TM_step</span><span>
 </span><span>              </span><span class="keyword1"><span class="command">by</span></span><span> </span><span class="delimiter">(</span><span>auto</span><span> </span><span>simp</span><span> </span><span>add</span><span class="delimiter">:</span><span> </span><span>comp_def</span><span> </span><span>zs_def</span><span> </span><span>map_Conf</span><span> </span><span>elim</span><span class="delimiter">!</span><span class="delimiter">:</span><span> </span><span>nft_step.cases</span><span class="delimiter">)</span><span>
 </span><span>            </span><span class="keyword1"><span class="command">then</span></span><span> </span><span class="keyword3"><span class="command">show</span></span><span> </span><span class="var">?thesis</span><span>
@@ -536,7 +543,7 @@
 </span><span>              </span><span class="keyword1"><span class="command">by</span></span><span> </span><span class="delimiter">(</span><span>auto</span><span> </span><span>simp</span><span> </span><span>add</span><span class="delimiter">:</span><span> </span><span>zs_def</span><span> </span><span>ds_def</span><span class="delimiter">)</span><span>
 </span><span>          </span><span class="keyword1"><span class="command">next</span></span><span>
 </span><span>            </span><span class="keyword3"><span class="command">case</span></span><span> </span><span class="delimiter">(</span><span>Some</span><span> </span><span>a</span><span class="delimiter">)</span><span>
-</span><span>            </span><span class="keyword1"><span class="command">then</span></span><span> </span><span class="keyword1"><span class="command">have</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;cs&#39; = [Just a, Just a&#39;, (Head s&#39; (TSymb a&#39;&#39;))] @ es&quot;</span></span></span><span>
+</span><span>            </span><span class="keyword1"><span class="command">then</span></span><span> </span><span class="keyword1"><span class="command">have</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;cs&#39; = [Just a, Just a&#39;, (Head s&#39; (Symb a&#39;&#39;))] @ es&quot;</span></span></span><span>
 </span><span>              </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>step</span><span> </span><span>Conf</span><span> </span><span>Head</span><span> </span><span>Right</span><span> </span><span>Cons</span><span> </span><span>TM_step</span><span>
 </span><span>              </span><span class="keyword1"><span class="command">by</span></span><span> </span><span class="delimiter">(</span><span>auto</span><span> </span><span>simp</span><span> </span><span>add</span><span class="delimiter">:</span><span> </span><span>comp_def</span><span> </span><span>zs_def</span><span> </span><span>map_Conf</span><span> </span><span>elim</span><span class="delimiter">!</span><span class="delimiter">:</span><span> </span><span>nft_step.cases</span><span class="delimiter">)</span><span>
 </span><span>            </span><span class="keyword1"><span class="command">then</span></span><span> </span><span class="keyword3"><span class="command">show</span></span><span> </span><span class="var">?thesis</span><span>
@@ -1372,19 +1379,20 @@
 </span><span>
 </span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* main results *)</span></span></span></span></span><span>
 </span><span>
-</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Lemma 14 *)</span></span></span></span></span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Claim 15 *)</span></span></span></span></span><span>
 </span><span class="keyword1"><span class="command">interpretation</span></span><span> </span><span>fNFT</span><span> </span><span>Init</span><span> </span><span>nft_step</span><span> </span><span>nft_accept</span><span> </span><span>UNIV</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>functional</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>unfold_locales</span><span> </span><span>assumption</span><span>
 </span><span>
-</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Lemma 15 *)</span></span></span></span></span><span>
-</span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>unbounded_iff_reachable</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;(&#8704;K. &#172;nft.bounded K) &#10231; (&#8704;n. &#8707;cs. reachable cs &#8743; length cs &#8805; n)&quot;</span></span></span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Claim 16 *)</span></span></span></span></span><span>
+</span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>unbounded_iff_reachable</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#172;(&#8707;K. nft.bounded K) &#10231; (&#8704;n. &#8707;cs. reachable cs &#8743; length cs &#8805; n)&quot;</span></span></span><span>
 </span><span>  </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>reachable_then_unbounded</span><span> </span><span>unbounded_then_reachable</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>auto</span><span>
 </span><span>
 </span><span class="keyword2"><span class="keyword">end</span></span><span>
 </span><span>
-</span><span class="keyword2"><span class="keyword">end</span></span></pre>
+</span><span class="keyword2"><span class="keyword">end</span></span><span>
+</span></pre>
 
 </div>
 </body>

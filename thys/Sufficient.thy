@@ -7,7 +7,7 @@ type_synonym ('s, 'b) tdfa_s = "('b list \<times> ('s \<times> nat) set) option"
 context bNFT
 begin
 
-definition "K' \<equiv> K + max_fanout"
+definition "K' \<equiv> K + output_speed"
 
 definition tdfa_init :: "('s, 'b) tdfa_s" where
   "tdfa_init = (if active init [] then Some ([], {(init, 0)}) else None)"
@@ -32,13 +32,14 @@ definition ext_qs :: "'b \<Rightarrow> 'b list \<Rightarrow> ('s \<times> nat) s
 inductive tdfa_step :: "('s, 'b) tdfa_s \<Rightarrow> ('a Al \<times> 'b Al) \<Rightarrow>
   ('s, 'b) tdfa_s \<times> bool \<times> bool \<Rightarrow> bool" where
   [intro]: "Some (bs, qs) \<in> tdfa_Q \<Longrightarrow> \<exists>(q, n) \<in> qs. accept q \<and> n = length bs \<Longrightarrow>
-    tdfa_step (Some (bs, qs)) (EOF, EOF) (None, False, False)"
+    tdfa_step (Some (bs, qs)) (Blank, Blank) (None, False, False)"
 | [intro]: "Some (bs, qs) \<in> tdfa_Q \<Longrightarrow> length bs < K' \<Longrightarrow> qs' = ext_qs b bs qs \<Longrightarrow> qs' \<noteq> {} \<Longrightarrow>
     m = Min (snd ` qs') \<Longrightarrow> tdfa_step (Some (bs, qs))
     (Symb a, Symb b) (Some (drop m (bs @ [b]), drop_qs m qs'), False, True)"
 | [intro]: "Some (bs, qs) \<in> tdfa_Q \<Longrightarrow> qs' = upd_qs a bs qs \<Longrightarrow> qs' \<noteq> {} \<Longrightarrow>
     m = Min (snd ` qs') \<Longrightarrow> tdfa_step (Some (bs, qs))
-    (Symb a, if length bs \<ge> K' then ext_b else EOF) (Some (drop m bs, drop_qs m qs'), True, False)"
+    (Symb a, if length bs \<ge> K' then ext_b else Blank)
+    (Some (drop m bs, drop_qs m qs'), True, False)"
 
 lemma upd_qs_tdfa_Q: "Some (bs, qs) \<in> tdfa_Q \<Longrightarrow>
   Some (bs, upd_qs a bs qs) \<in> tdfa_Q"
@@ -95,7 +96,7 @@ definition tdfa_inv :: "'a list \<Rightarrow> 'b list \<Rightarrow> 'b list \<Ri
   "tdfa_inv as' bs' bs b qs \<longleftrightarrow> (\<forall>(q, n) \<in> qs. q \<in> Q \<and> n \<le> length bs) \<and>
     (\<forall>q n. n \<le> length bs' \<and> init \<leadsto>(as', take n bs') q \<and> active q (drop n bs' @ bs) \<longrightarrow>
       n = length bs') \<and>
-    (case b of EOF \<Rightarrow> True | Symb b' \<Rightarrow>
+    (case b of Blank \<Rightarrow> True | Symb b' \<Rightarrow>
       (\<forall>q b'' bs''. \<not>(init \<leadsto>(as', bs' @ bs @ b'' # bs'') q \<and> active q []))) \<and>
     (\<forall>q n. q \<in> Q \<and> n \<le> length bs \<longrightarrow> ((q, n) \<in> qs \<longleftrightarrow>
       init \<leadsto>(as', bs' @ take n bs) q \<and> active q (drop n bs)))"
@@ -105,7 +106,7 @@ definition tdfa_inv_aligned :: "'a list \<Rightarrow> 'b list \<Rightarrow> 'b l
   "tdfa_inv_aligned as' bs' bs b qs \<longleftrightarrow> (\<exists>qm. (qm, 0) \<in> qs) \<and> tdfa_inv as' bs' bs b qs"
 
 lemma tdfa_inv_init: "active init [] \<Longrightarrow>
-  tdfa_inv_aligned [] [] [] (case bs'' of [] \<Rightarrow> EOF | b # x \<Rightarrow> Symb b) {(init, 0)}"
+  tdfa_inv_aligned [] [] [] (case bs'' of [] \<Rightarrow> Blank | b # x \<Rightarrow> Symb b) {(init, 0)}"
   using init_in_Q no_step
   by (auto simp add: tdfa_inv_aligned_def tdfa_inv_def split: Al.splits list.splits)
 
@@ -120,11 +121,11 @@ lemma app_eq_app': "bs @ b'' # bs'' = ds @ ds' \<Longrightarrow> length bs < len
   by (metis append_eq_append_conv_if id_take_nth_drop leD)
 
 lemma tdfa_inv_upd_qs: "tdfa_inv_aligned as' bs' bs b qs \<Longrightarrow>
-  (case b of EOF \<Rightarrow> True | Symb b' \<Rightarrow> length bs \<ge> K') \<Longrightarrow>
+  (case b of Blank \<Rightarrow> True | Symb b' \<Rightarrow> length bs \<ge> K') \<Longrightarrow>
   tdfa_inv (as' @ [a]) bs' bs b (upd_qs a bs qs)"
 proof -
   assume assms: "tdfa_inv_aligned as' bs' bs b qs"
-    "(case b of EOF \<Rightarrow> True | Symb b' \<Rightarrow> length bs \<ge> K')"
+    "(case b of Blank \<Rightarrow> True | Symb b' \<Rightarrow> length bs \<ge> K')"
   have assms': "\<And>q n. n \<le> length bs' \<Longrightarrow> init \<leadsto>(as', take n bs') q \<Longrightarrow>
     active q (drop n bs' @ bs) \<Longrightarrow> n = length bs'"
     using assms(1) unfolding tdfa_inv_aligned_def tdfa_inv_def by fast
@@ -210,11 +211,11 @@ proof -
     then show "n' = length bs'"
       using assms'[OF _ split(1)[unfolded n_def(1)]] n_def(2) lassms(1) by auto
   qed
-  moreover have "(case b of EOF \<Rightarrow> True | Symb b' \<Rightarrow>
+  moreover have "(case b of Blank \<Rightarrow> True | Symb b' \<Rightarrow>
     (\<forall>q b'' bs''. \<not>(init \<leadsto>(as' @ [a], bs' @ bs @ b'' # bs'') q \<and> active q [])))"
   proof (cases b)
     case (Symb b')
-    have len_bs: "length bs \<ge> K + max_fanout"
+    have len_bs: "length bs \<ge> K + output_speed"
       using assms(2)[unfolded Symb] by (auto simp add: K'_def)
     have "\<And>q b'' bs''. \<not> (init\<leadsto>(as' @ [a], bs' @ bs @ b'' # bs'')q \<and> active q [])"
     proof (rule ccontr)
@@ -225,9 +226,9 @@ proof -
         using computation_split by fastforce
       then have "\<delta> q'' a (q, cs')"
         using step_dest by auto
-      then have "length cs' \<le> max_fanout"
-        using init_in_Q comp_closed[OF split(1)] max_fanout_step by auto
-      moreover have "length cs + length cs' \<ge> length bs' + K + max_fanout + 1"
+      then have "length cs' \<le> output_speed"
+        using init_in_Q comp_closed[OF split(1)] output_speed_step by auto
+      moreover have "length cs + length cs' \<ge> length bs' + K + output_speed + 1"
         using arg_cong[OF split(3), of length] len_bs by auto
       ultimately have len_cs: "length cs \<ge> length bs' + K + 1"
         by auto
@@ -338,7 +339,7 @@ proof -
         using lassms(2,3) m_leq_bs min nat_le_linear by auto
     qed
   qed
-  moreover have "(case b of EOF \<Rightarrow> True | Symb b' \<Rightarrow>
+  moreover have "(case b of Blank \<Rightarrow> True | Symb b' \<Rightarrow>
     (\<forall>q b'' bs''. \<not>(init \<leadsto>(as', (bs' @ take m bs) @ drop m bs @ b'' # bs'') q \<and> active q [])))"
     using assms(1) m_leq_bs
     apply (auto simp add: tdfa_inv_def split: Al.splits)
@@ -395,7 +396,7 @@ proof -
   then have "\<And>q n. n \<le> length bs' \<Longrightarrow> init \<leadsto>(as', take n bs') q \<Longrightarrow>
     active q (drop n bs' @ (bs @ [b])) \<Longrightarrow> n = length bs'"
     using active_mono by auto
-  moreover have "(case x of EOF \<Rightarrow> True | Symb b' \<Rightarrow>
+  moreover have "(case x of Blank \<Rightarrow> True | Symb b' \<Rightarrow>
     (\<forall>q b'' bs''. \<not>(init \<leadsto>(as', bs' @ (bs @ [b]) @ b'' # bs'') q \<and> active q [])))"
     using assms' by (auto split: Al.splits)
   ultimately show "tdfa_inv as' bs' (bs @ [b]) x (ext_qs b bs qs)"
@@ -404,10 +405,10 @@ proof -
 qed
 
 lemma tdfa_inv_drop_upd_qs: "tdfa_inv_aligned as' bs' bs
-  (if length bs \<ge> K' then ext_b else EOF) qs \<Longrightarrow>
+  (if length bs \<ge> K' then ext_b else Blank) qs \<Longrightarrow>
   qs' = upd_qs a bs qs \<Longrightarrow> qs' \<noteq> {} \<Longrightarrow> m = Min (snd ` qs') \<Longrightarrow> m \<le> length bs \<and>
   tdfa_inv_aligned (as' @ [a]) (bs' @ take m bs) (drop m bs)
-  (if length bs \<ge> K' then ext_b else EOF) (drop_qs m qs')"
+  (if length bs \<ge> K' then ext_b else Blank) (drop_qs m qs')"
   apply (rule tdfa_inv_drop_qs)
   using tdfa_inv_upd_qs by (auto split: if_splits Al.splits)
 
@@ -420,7 +421,7 @@ lemma tdfa_inv_drop_ext_qs: "tdfa_inv_aligned as' bs' bs (Symb b) qs \<Longright
 lemma \<tau>_tdfa_\<tau>: "q \<leadsto>(as, drop n bs @ bs'') q' \<Longrightarrow> accept q' \<Longrightarrow>
   init \<leadsto>(as', bs' @ take n bs) q \<Longrightarrow> q \<in> Q \<Longrightarrow> n \<le> length bs \<Longrightarrow>
   Some (bs, qs) \<in> tdfa_Q \<Longrightarrow>
-  tdfa_inv_aligned as' bs' bs (case bs'' of [] \<Rightarrow> EOF | b # _ \<Rightarrow> Symb b) qs \<Longrightarrow>
+  tdfa_inv_aligned as' bs' bs (case bs'' of [] \<Rightarrow> Blank | b # _ \<Rightarrow> Symb b) qs \<Longrightarrow>
   tdfa.computation (Some (bs, qs)) (as, bs'') None"
 proof (induction q "(as, drop n bs @ bs'')" q' arbitrary: n as bs bs'' as' bs' qs
   rule: computation.induct)
@@ -473,7 +474,7 @@ next
       using finite_Q finite_subset qs'_nonempty by fastforce+
     have m_n_cs: "m \<le> n + length cs"
       using m_def Min_le[OF snd_qs'(1)] q'_qs' by fastforce
-    have inv': "m \<le> length bs \<and> tdfa_inv_aligned (as' @ [a]) (bs' @ take m bs) (drop m bs) EOF
+    have inv': "m \<le> length bs \<and> tdfa_inv_aligned (as' @ [a]) (bs' @ take m bs) (drop m bs) Blank
       (drop_qs m qs')"
       using tdfa_inv_drop_upd_qs[OF _ qs'_def qs'_nonempty m_def, of as' bs'] Nil(10)
       by (cases "K' \<le> length bs") auto
@@ -490,7 +491,7 @@ next
     have "tdfa.computation (Some (drop m bs, drop_qs m qs')) (as, []) None"
       using Nil(3)[OF _ Nil(5) init' q'_Q _ drop_tdfa_Q, of "[]"] n_cs_le_bs m_n_cs
         cs'_def conjunct2[OF inv'] cs'_def' by auto
-    moreover have "tdfa_step (Some (bs, qs)) (Symb a, EOF)
+    moreover have "tdfa_step (Some (bs, qs)) (Symb a, Blank)
       (Some (drop m bs, drop_qs m qs'), True, False)"
       using qs'_def m_def qs'_nonempty Nil(9)
       apply (cases "length bs \<ge> K'")
@@ -542,8 +543,8 @@ next
           by (metis append_take_drop_id)
         have "n \<le> K"
           using bounded'[OF init_q(1) act_q_empty init_qm(1) act_qm] Cons(9) by auto
-        moreover have "length cs \<le> max_fanout"
-          using max_fanout_step Cons(2,8) by auto
+        moreover have "length cs \<le> output_speed"
+          using output_speed_step Cons(2,8) by auto
         ultimately show ?thesis
           using True unfolding K'_def by auto
       qed
@@ -603,7 +604,7 @@ next
         (Some (drop m (bs @ [b]), drop_qs m qs'), False, True)"
         using Cons(10) qs'_def m_def qs'_nonempty False by fastforce
       have inv': "m \<le> length (bs @ [b]) \<and> tdfa_inv_aligned as' (bs' @ take m (bs @ [b]))
-        (drop m (bs @ [b])) (case bs'' of [] \<Rightarrow> EOF | b' # _ \<Rightarrow> Symb b') (drop_qs m qs')"
+        (drop m (bs @ [b])) (case bs'' of [] \<Rightarrow> Blank | b' # _ \<Rightarrow> Symb b') (drop_qs m qs')"
         using Cons(11) tdfa_inv_drop_ext_qs[OF _ qs'_def qs'_nonempty m_def] by auto
       have drop_tdfa_Q: "Some (drop m (bs @ [b]), drop_qs m (ext_qs b bs qs)) \<in> tdfa_Q"
         using qs'_def m_def drop_qs_tdfa_Q[OF ext_qs_tdfa_Q, OF Cons(10)] False qs'_nonempty
@@ -639,7 +640,7 @@ next
 qed
 
 lemma tdfa_\<tau>_\<tau>: "tdfa.computation (Some (bs, qs)) (as, bs'') q'' \<Longrightarrow> q'' = None \<Longrightarrow>
-  tdfa_inv_aligned as' bs' bs (case bs'' of [] \<Rightarrow> EOF | b # _ \<Rightarrow> Symb b) qs \<Longrightarrow>
+  tdfa_inv_aligned as' bs' bs (case bs'' of [] \<Rightarrow> Blank | b # _ \<Rightarrow> Symb b) qs \<Longrightarrow>
   (as' @ as, bs' @ bs @ bs'') \<in> \<tau>"
 proof (induction "Some (bs, qs)" "(as, bs'')" q'' arbitrary: bs qs as bs'' as' bs'
   rule: tdfa.computation.induct)
@@ -649,7 +650,7 @@ proof (induction "Some (bs, qs)" "(as, bs'')" q'' arbitrary: bs qs as bs'' as' b
   have props: "qs' \<noteq> {}" "q' = Some (drop m bs, drop_qs m qs')"
     using qs'_def m_def step_L(1)
     by (auto elim: tdfa_step.cases)
-  have "m \<le> length bs \<and> tdfa_inv_aligned (as' @ [a]) (bs' @ take m bs) (drop m bs) EOF
+  have "m \<le> length bs \<and> tdfa_inv_aligned (as' @ [a]) (bs' @ take m bs) (drop m bs) Blank
     (drop_qs m qs')"
     using tdfa_inv_drop_upd_qs[OF _ qs'_def props(1) m_def, of as' bs'] step_L(5)
     by (cases "K' \<le> length bs") auto
@@ -678,7 +679,7 @@ next
     using qs'_def m_def step_FT(1)
     by (auto elim: tdfa_step.cases)
   have inv: "m \<le> length (bs @ [b])" "tdfa_inv_aligned as' (bs' @ take m (bs @ [b]))
-    (drop m (bs @ [b])) (case bs'' of [] \<Rightarrow> EOF | b # x \<Rightarrow> Symb b) (drop_qs m qs')"
+    (drop m (bs @ [b])) (case bs'' of [] \<Rightarrow> Blank | b # x \<Rightarrow> Symb b) (drop_qs m qs')"
     using tdfa_inv_drop_ext_qs[OF _ qs'_def props(2) m_def] step_FT(5) by auto
   show ?case
     using step_FT(3)[OF props(3) step_FT(4) inv(2)] inv(1)
@@ -708,7 +709,7 @@ lemma \<tau>_sub_tdfa_\<tau>: "\<tau> \<subseteq> tdfa.\<tau>"
 
 (* main result *)
 
-(* Theorem 7 *)
+(* Theorem 9 *)
 lemma tdfa_correct: "\<tau> = tdfa.\<tau>"
   using tdfa_\<tau>_sub_\<tau> \<tau>_sub_tdfa_\<tau> by auto
 

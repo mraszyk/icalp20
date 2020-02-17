@@ -19,7 +19,7 @@
 </span><span>  </span><span class="keyword2"><span class="keyword">imports</span></span><span> </span><span>Sufficient</span><span>
 </span><span class="keyword2"><span class="keyword">begin</span></span><span>
 </span><span>
-</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Example 6 *)</span></span></span></span></span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Example 8 *)</span></span></span></span></span><span>
 </span><span>
 </span><span class="keyword1"><span class="command">datatype</span></span><span> </span><span>states</span><span> </span><span class="delimiter">=</span><span> </span><span>q0</span><span> </span><span class="delimiter">|</span><span> </span><span>q1</span><span> </span><span class="delimiter">|</span><span> </span><span>q2</span><span> </span><span class="delimiter">|</span><span> </span><span>q3</span><span> </span><span class="delimiter">|</span><span> </span><span>qf</span><span>
 </span><span>
@@ -51,6 +51,8 @@
 </span><span>
 </span><span class="keyword2"><span class="keyword">end</span></span><span>
 </span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Figure 2 *)</span></span></span></span></span><span>
+</span><span>
 </span><span class="keyword1"><span class="command">inductive</span></span><span> </span><span>delta</span><span> </span><span class="delimiter">::</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;states &#8658; Sigma &#8658; states &#215; Sigma list &#8658; bool&quot;</span></span></span><span> </span><span class="keyword2"><span class="keyword">where</span></span><span>
 </span><span>  </span><span class="string"><span class="delete"><span class="delete">&quot;delta q0 a (q1, [a, b, a])&quot;</span></span></span><span>
 </span><span class="delimiter">|</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;delta q0 a (q2, [a, b, a, b])&quot;</span></span></span><span>
@@ -72,6 +74,8 @@
 </span><span>  </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>finite_UNIV</span><span> </span><span>finite_delta</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>unfold_locales</span><span> </span><span>auto</span><span>
 </span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* lemmas *)</span></span></span></span></span><span>
+</span><span>
 </span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>comp_q0_qf</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;computation q0 ([a, b], [a, b, a, b, a, a]) qf&quot;</span></span></span><span>
 </span><span>  </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>comp_trans</span><span class="delimiter">[</span><span>OF</span><span> </span><span>one_step</span><span class="delimiter">[</span><span>OF</span><span> </span><span>delta.intros</span><span class="delimiter">(</span><span>3</span><span class="delimiter">)</span><span class="delimiter">]</span><span> </span><span>one_step</span><span class="delimiter">[</span><span>OF</span><span> </span><span>delta.intros</span><span class="delimiter">(</span><span>7</span><span class="delimiter">)</span><span class="delimiter">]</span><span class="delimiter">]</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>auto</span><span>
@@ -92,6 +96,8 @@
 </span><span>
 </span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>comp_qf_dest</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;computation qf (zs, bs) q&#39; &#10233; zs = [] &#8743; bs = [] &#8743; q&#39; = qf&quot;</span></span></span><span>
 </span><span>  </span><span class="keyword1"><span class="command">by</span></span><span> </span><span class="delimiter">(</span><span>auto</span><span> </span><span>elim</span><span class="delimiter">:</span><span> </span><span>computation.cases</span><span> </span><span>delta.cases</span><span class="delimiter">)</span><span>
+</span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* accepted relation *)</span></span></span></span></span><span>
 </span><span>
 </span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>lang</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#964; = {([a, a], [a, b, a, b, a]), ([a, a], [a, b, a, b, a, b]),
   ([a, b], [a, b, a, b, a, a])}&quot;</span></span></span><span>
@@ -162,6 +168,8 @@
 </span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>active_qf_dest</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;active qf bs &#10233; bs = []&quot;</span></span></span><span>
 </span><span>  </span><span class="keyword1"><span class="command">by</span></span><span> </span><span class="delimiter">(</span><span>auto</span><span> </span><span>simp</span><span> </span><span>add</span><span class="delimiter">:</span><span> </span><span>active_def</span><span> </span><span>dest</span><span class="delimiter">:</span><span> </span><span>comp_qf_dest</span><span class="delimiter">)</span><span>
 </span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* bounded NFT with trailing bound 1 *)</span></span></span></span></span><span>
+</span><span>
 </span><span class="keyword1"><span class="command">interpretation</span></span><span> </span><span>bNFT</span><span> </span><span>q0</span><span> </span><span>delta</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;&#955;q. q = qf&quot;</span></span></span><span> </span><span>UNIV</span><span> </span><span>1</span><span>
 </span><span>  </span><span class="keyword1"><span class="command"><span class="improper"><span class="command">apply</span></span></span></span><span> </span><span>unfold_locales</span><span>
 </span><span>  </span><span class="keyword1"><span class="command"><span class="improper"><span class="command">apply</span></span></span></span><span> </span><span class="delimiter">(</span><span>auto</span><span> </span><span>simp</span><span> </span><span>add</span><span class="delimiter">:</span><span> </span><span>bounded_def</span><span class="delimiter">)</span><span>
@@ -189,7 +197,9 @@
 </span><span>  </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>delta.intros</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>fastforce</span><span>
 </span><span>
-</span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>max_fanout</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;max_fanout = 4&quot;</span></span></span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* output speed *)</span></span></span></span></span><span>
+</span><span>
+</span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>output_speed</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;output_speed = 4&quot;</span></span></span><span>
 </span><span class="keyword1"><span class="command">proof</span></span><span> </span><span>-</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">have</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;length ` snd ` {x. &#8707;a b. delta a b x} = {2, 3, 4}&quot;</span></span></span><span>
 </span><span>    </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>delta_length</span><span> </span><span>delta_length&#39;</span><span>
@@ -197,11 +207,15 @@
 </span><span>      </span><span class="keyword1"><span class="command"><span class="improper"><span class="command">apply</span></span></span></span><span> </span><span class="delimiter">(</span><span>metis</span><span> </span><span>imageI</span><span> </span><span>mem_Collect_eq</span><span> </span><span>snd_conv</span><span class="delimiter">)</span><span class="delimiter">+</span><span>
 </span><span>    </span><span class="keyword1"><span class="command"><span class="improper"><span class="command">done</span></span></span></span><span>
 </span><span>  </span><span class="keyword1"><span class="command">then</span></span><span> </span><span class="keyword3"><span class="command">show</span></span><span> </span><span class="var">?thesis</span><span>
-</span><span>    </span><span class="keyword1"><span class="command">by</span></span><span> </span><span class="delimiter">(</span><span>auto</span><span> </span><span>simp</span><span> </span><span>add</span><span class="delimiter">:</span><span> </span><span>max_fanout_def</span><span> </span><span>all_trans_def</span><span class="delimiter">)</span><span>
+</span><span>    </span><span class="keyword1"><span class="command">by</span></span><span> </span><span class="delimiter">(</span><span>auto</span><span> </span><span>simp</span><span> </span><span>add</span><span class="delimiter">:</span><span> </span><span>output_speed_def</span><span> </span><span>all_trans_def</span><span class="delimiter">)</span><span>
 </span><span class="keyword1"><span class="command">qed</span></span><span>
 </span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* buffer length *)</span></span></span></span></span><span>
+</span><span>
 </span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>K&#39;</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;K&#39; = 5&quot;</span></span></span><span>
-</span><span>  </span><span class="keyword1"><span class="command">unfolding</span></span><span> </span><span>K&#39;_def</span><span> </span><span>max_fanout</span><span> </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>auto</span><span>
+</span><span>  </span><span class="keyword1"><span class="command">unfolding</span></span><span> </span><span>K&#39;_def</span><span> </span><span>output_speed</span><span> </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>auto</span><span>
+</span><span>
+</span><span class="comment"><span class="delete"><span class="delete"><span class="delete"><span class="delete">(* Figure 3 *)</span></span></span></span></span><span>
 </span><span>
 </span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>step_1</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;tdfa_step tdfa_init (Symb a, Symb a) (Some ([a], {(q0, 0)}), False, True)&quot;</span></span></span><span>
 </span><span>  </span><span class="string"><span class="delete"><span class="delete">&quot;Some ([a], {(q0, 0)}) &#8712; tdfa_Q&quot;</span></span></span><span>
@@ -345,7 +359,7 @@
 </span><span>    </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>auto</span><span>
 </span><span class="keyword1"><span class="command">qed</span></span><span>
 </span><span>
-</span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>step_8</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;tdfa_step (Some ([b, a, b], {(q1, 0), (q2, 1)})) (Symb a, EOF)
+</span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>step_8</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;tdfa_step (Some ([b, a, b], {(q1, 0), (q2, 1)})) (Symb a, Blank)
   (Some ([], {(qf, 0)}), True, False)&quot;</span></span></span><span>
 </span><span>  </span><span class="string"><span class="delete"><span class="delete">&quot;Some ([], {(qf, 0)}) &#8712; tdfa_Q&quot;</span></span></span><span>
 </span><span class="keyword1"><span class="command">proof</span></span><span> </span><span>-</span><span>
@@ -357,7 +371,7 @@
 </span><span>        </span><span>intro</span><span class="delimiter">:</span><span> </span><span>delta.intros</span><span> </span><span>act_qf</span><span class="delimiter">)</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">have</span></span><span> </span><span>drop_qs</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;drop_qs 3 {(qf, 3)} = {(qf, 0)}&quot;</span></span></span><span>
 </span><span>    </span><span class="keyword1"><span class="command">by</span></span><span> </span><span class="delimiter">(</span><span>auto</span><span> </span><span>simp</span><span> </span><span>add</span><span class="delimiter">:</span><span> </span><span>drop_qs_def</span><span class="delimiter">)</span><span>
-</span><span>  </span><span class="keyword3"><span class="command">show</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;tdfa_step (Some ([b, a, b], {(q1, 0), (q2, 1)})) (Symb a, EOF)
+</span><span>  </span><span class="keyword3"><span class="command">show</span></span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;tdfa_step (Some ([b, a, b], {(q1, 0), (q2, 1)})) (Symb a, Blank)
     (Some ([], {(qf, 0)}), True, False)&quot;</span></span></span><span>
 </span><span>    </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>tdfa_step.intros</span><span class="delimiter">(</span><span>3</span><span class="delimiter">)</span><span class="delimiter">[</span><span>OF</span><span> </span><span>step_7</span><span class="delimiter">(</span><span>2</span><span class="delimiter">)</span><span> </span><span>upd_qs</span><span class="delimiter">[</span><span>symmetric</span><span class="delimiter">]</span><span class="delimiter">,</span><span> </span><span>of</span><span> </span><span>3</span><span class="delimiter">]</span><span>
 </span><span>    </span><span class="keyword1"><span class="command">unfolding</span></span><span> </span><span>drop_qs</span><span> </span><span>K&#39;</span><span>
@@ -367,7 +381,7 @@
 </span><span>    </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>auto</span><span>
 </span><span class="keyword1"><span class="command">qed</span></span><span>
 </span><span>
-</span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>step_9</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;tdfa_step (Some ([], {(qf, 0)})) (EOF, EOF) (None, False, False)&quot;</span></span></span><span>
+</span><span class="keyword1"><span class="command">lemma</span></span><span> </span><span>step_9</span><span class="delimiter">:</span><span> </span><span class="string"><span class="delete"><span class="delete">&quot;tdfa_step (Some ([], {(qf, 0)})) (Blank, Blank) (None, False, False)&quot;</span></span></span><span>
 </span><span>  </span><span class="keyword1"><span class="command">using</span></span><span> </span><span>tdfa_step.intros</span><span class="delimiter">(</span><span>1</span><span class="delimiter">)</span><span class="delimiter">[</span><span>OF</span><span> </span><span>step_8</span><span class="delimiter">(</span><span>2</span><span class="delimiter">)</span><span class="delimiter">]</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>auto</span><span>
 </span><span>
@@ -383,8 +397,7 @@
 </span><span>  </span><span class="keyword1"><span class="command">unfolding</span></span><span> </span><span>tdfa.&#964;_def</span><span> </span><span>tdfa_accept_def</span><span>
 </span><span>  </span><span class="keyword1"><span class="command">by</span></span><span> </span><span>auto</span><span>
 </span><span>
-</span><span class="keyword2"><span class="keyword">end</span></span><span>
-</span></pre>
+</span><span class="keyword2"><span class="keyword">end</span></span></pre>
 
 </div>
 </body>

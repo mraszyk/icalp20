@@ -2,23 +2,24 @@ theory Undecidable
   imports Computation
 begin
 
-datatype 'a TAl = Blank | TSymb 'a
-datatype ('a, 's) TCell = Head 's "'a TAl" | Just "'a"
+(* Turing machine definitions *)
+
+datatype ('a, 's) TCell = Head 's "'a Al" | Just "'a"
 datatype Move = Left | Right
 
-instantiation TAl :: (finite) finite
+instantiation Al :: (finite) finite
 begin
 
 instance
 proof (standard)
   have "finite (UNIV :: 'a :: finite set)"
     using finite_UNIV by auto
-  moreover have "(UNIV :: 'a :: finite TAl set) \<subseteq> {Blank} \<union> TSymb ` UNIV"
+  moreover have "(UNIV :: 'a :: finite Al set) \<subseteq> {Blank} \<union> Symb ` UNIV"
     apply (rule subsetI)
     subgoal for x
       by (cases x) auto
     done
-  ultimately show "finite (UNIV :: 'a :: finite TAl set)"
+  ultimately show "finite (UNIV :: 'a :: finite Al set)"
     using finite_subset by fastforce
 qed
 
@@ -30,7 +31,7 @@ begin
 instance
 proof (standard)
   have "finite (UNIV :: 'a :: finite set)" "finite ((UNIV :: 's :: finite set) \<times>
-    (UNIV :: ('a :: finite) TAl set))"
+    (UNIV :: ('a :: finite) Al set))"
     using finite_UNIV by auto
   moreover have "(UNIV :: ('a :: finite, 's :: finite) TCell set) \<subseteq>
     (\<lambda>(x, y). Head x y) ` (UNIV \<times> UNIV) \<union> Just ` UNIV"
@@ -43,6 +44,8 @@ proof (standard)
 qed
 
 end
+
+(* NFT definitions *)
 
 datatype ('a, 's) Cell = Conf "('a, 's) TCell" | Sep | End_Copy | End_Sim
 
@@ -87,9 +90,11 @@ qed
 
 end
 
+(* Definition 12 *)
+
 locale TM =
   fixes init :: "'s :: finite"
-    and step :: "'s \<Rightarrow> 'a :: finite TAl \<Rightarrow> ('s \<times> 'a \<times> Move) option"
+    and step :: "'s \<Rightarrow> 'a :: finite Al \<Rightarrow> ('s \<times> 'a \<times> Move) option"
     and accept :: "'s \<Rightarrow> bool"
 begin
 
@@ -100,14 +105,16 @@ inductive TM_step :: "('a, 's) TCell list \<Rightarrow> ('a, 's) TCell list \<Ri
     (map Just as @ [Just a', Head s' Blank])"
 | "\<not>accept s \<Longrightarrow> step s ta = Some (s', a', Left) \<Longrightarrow>
     TM_step (map Just as @ [Just a, Head s ta] @ map Just as')
-    (map Just as @ [Head s' (TSymb a), Just a'] @ map Just as')"
+    (map Just as @ [Head s' (Symb a), Just a'] @ map Just as')"
 | "\<not>accept s \<Longrightarrow> step s ta = Some (s', a', Right) \<Longrightarrow>
     TM_step (map Just as @ [Head s ta, Just a] @ map Just as')
-    (map Just as @ [Just a', Head s' (TSymb a)] @ map Just as')"
+    (map Just as @ [Just a', Head s' (Symb a)] @ map Just as')"
 
 inductive reachable :: "('a, 's) TCell list \<Rightarrow> bool" where
   "reachable [Head init Blank]"
 | "reachable cs \<Longrightarrow> TM_step cs cs' \<Longrightarrow> reachable cs'"
+
+(* NFT definitions *)
 
 inductive nft_step :: "('a, 's) NState \<Rightarrow> ('a, 's) Cell \<Rightarrow>
   ('a, 's) NState \<times> ('a, 's) Cell list \<Rightarrow> bool" where
@@ -124,11 +131,11 @@ inductive nft_step :: "('a, 's) NState \<Rightarrow> ('a, 's) Cell \<Rightarrow>
     (PostStep (Some s'), [Conf (Just a')])"
 | "\<not>accept s \<Longrightarrow> step s ta = Some (s', a', Left) \<Longrightarrow>
     nft_step (PreStep (Some a)) (Conf (Head s ta))
-    (PostStep None, [Conf (Head s' (TSymb a)), Conf (Just a')])"
+    (PostStep None, [Conf (Head s' (Symb a)), Conf (Just a')])"
 | "\<not>accept s \<Longrightarrow> step s ta = Some (s', a', Right) \<Longrightarrow>
     nft_step (PreStep (Some a)) (Conf (Head s ta))
     (PostStep (Some s'), [Conf (Just a), Conf (Just a')])"
-| "nft_step (PostStep (Some s')) (Conf (Just a)) (PostStep None, [Conf (Head s' (TSymb a))])"
+| "nft_step (PostStep (Some s')) (Conf (Just a)) (PostStep None, [Conf (Head s' (Symb a))])"
 | "nft_step (PostStep None) (Conf (Just a)) (PostStep None, [Conf (Just a)])"
 | "nft_step (PostStep (Some s')) Sep (PreStep None, [Conf (Head s' Blank), Sep])"
 | "nft_step (PostStep None) Sep (PreStep None, [Sep])"
@@ -327,7 +334,7 @@ next
     by (fastforce simp add: nft.bounded_def)
 qed
 
-lemma reachable_then_unbounded: "\<forall>n. \<exists>cs. reachable cs \<and> length cs \<ge> n \<Longrightarrow> \<forall>K. \<not>nft.bounded K"
+lemma reachable_then_unbounded: "\<forall>n. \<exists>cs. reachable cs \<and> length cs \<ge> n \<Longrightarrow> \<not>(\<exists>K. nft.bounded K)"
   using reachable_unbounded nft.bounded_mono
   by auto
 
@@ -466,7 +473,7 @@ proof (induction q "(map Conf cs @ [Sep], map Conf cs' @ [Sep])" q' arbitrary: c
             by (auto simp add: ds_def zs_def)
         next
           case (Some a)
-          then have "cs' = [(Head s' (TSymb a)), (Just a')] @ ds"
+          then have "cs' = [(Head s' (Symb a)), (Just a')] @ ds"
             using step Conf Head Left TM_step
             by (auto simp add: comp_def zs_def map_Conf elim!: nft_step.cases)
           then show ?thesis
@@ -504,14 +511,14 @@ proof (induction q "(map Conf cs @ [Sep], map Conf cs' @ [Sep])" q' arbitrary: c
           obtain a'' zs where zs_def: "e = Just a''" "es = map Just zs"
             "nft.computation (PostStep None) (map Conf es @ [Sep], map (Conf \<circ> Just) zs @ [Sep])
             (PreStep None)"
-            "bs' = Conf (Head s' (TSymb a'')) # map (Conf \<circ> Just) zs @ [Sep]"
+            "bs' = Conf (Head s' (Symb a'')) # map (Conf \<circ> Just) zs @ [Sep]"
             apply (rule nft.computation.cases[OF step(2)])
             using q'_def ds_def Cons step(7) PostStep_None
             by (auto elim!: nft_step.cases dest!: PostStep_None_PreStep_None)
           then show ?thesis
           proof (cases x)
             case None
-            then have "cs' = [Just a', (Head s' (TSymb a''))] @ es"
+            then have "cs' = [Just a', (Head s' (Symb a''))] @ es"
               using step Conf Head Right Cons TM_step
               by (auto simp add: comp_def zs_def map_Conf elim!: nft_step.cases)
             then show ?thesis
@@ -519,7 +526,7 @@ proof (induction q "(map Conf cs @ [Sep], map Conf cs' @ [Sep])" q' arbitrary: c
               by (auto simp add: zs_def ds_def)
           next
             case (Some a)
-            then have "cs' = [Just a, Just a', (Head s' (TSymb a''))] @ es"
+            then have "cs' = [Just a, Just a', (Head s' (Symb a''))] @ es"
               using step Conf Head Right Cons TM_step
               by (auto simp add: comp_def zs_def map_Conf elim!: nft_step.cases)
             then show ?thesis
@@ -1355,13 +1362,13 @@ qed
 
 (* main results *)
 
-(* Lemma 14 *)
+(* Claim 15 *)
 interpretation fNFT Init nft_step nft_accept UNIV
   using functional
   by unfold_locales assumption
 
-(* Lemma 15 *)
-lemma unbounded_iff_reachable: "(\<forall>K. \<not>nft.bounded K) \<longleftrightarrow> (\<forall>n. \<exists>cs. reachable cs \<and> length cs \<ge> n)"
+(* Claim 16 *)
+lemma unbounded_iff_reachable: "\<not>(\<exists>K. nft.bounded K) \<longleftrightarrow> (\<forall>n. \<exists>cs. reachable cs \<and> length cs \<ge> n)"
   using reachable_then_unbounded unbounded_then_reachable
   by auto
 

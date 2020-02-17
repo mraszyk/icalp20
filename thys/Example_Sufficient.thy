@@ -2,7 +2,7 @@ theory Example_Sufficient
   imports Sufficient
 begin
 
-(* Example 6 *)
+(* Example 8 *)
 
 datatype states = q0 | q1 | q2 | q3 | qf
 
@@ -34,6 +34,8 @@ qed
 
 end
 
+(* Figure 2 *)
+
 inductive delta :: "states \<Rightarrow> Sigma \<Rightarrow> states \<times> Sigma list \<Rightarrow> bool" where
   "delta q0 a (q1, [a, b, a])"
 | "delta q0 a (q2, [a, b, a, b])"
@@ -55,6 +57,8 @@ interpretation NFT q0 delta "\<lambda>q. q = qf" UNIV
   using finite_UNIV finite_delta
   by unfold_locales auto
 
+(* lemmas *)
+
 lemma comp_q0_qf: "computation q0 ([a, b], [a, b, a, b, a, a]) qf"
   using comp_trans[OF one_step[OF delta.intros(3)] one_step[OF delta.intros(7)]]
   by auto
@@ -75,6 +79,8 @@ lemma comp_q3_qf: "computation q3 (as, bs) qf \<Longrightarrow> as = [b] \<and> 
 
 lemma comp_qf_dest: "computation qf (zs, bs) q' \<Longrightarrow> zs = [] \<and> bs = [] \<and> q' = qf"
   by (auto elim: computation.cases delta.cases)
+
+(* accepted relation *)
 
 lemma lang: "\<tau> = {([a, a], [a, b, a, b, a]), ([a, a], [a, b, a, b, a, b]),
   ([a, b], [a, b, a, b, a, a])}"
@@ -145,6 +151,8 @@ lemma active_q3_dest: "active q3 bs \<Longrightarrow> \<exists>n. bs = take n [a
 lemma active_qf_dest: "active qf bs \<Longrightarrow> bs = []"
   by (auto simp add: active_def dest: comp_qf_dest)
 
+(* bounded NFT with trailing bound 1 *)
+
 interpretation bNFT q0 delta "\<lambda>q. q = qf" UNIV 1
   apply unfold_locales
   apply (auto simp add: bounded_def)
@@ -172,7 +180,9 @@ lemma delta_length': "n \<in> {2, 3, 4} \<Longrightarrow> \<exists>x y z. delta 
   using delta.intros
   by fastforce
 
-lemma max_fanout: "max_fanout = 4"
+(* output speed *)
+
+lemma output_speed: "output_speed = 4"
 proof -
   have "length ` snd ` {x. \<exists>a b. delta a b x} = {2, 3, 4}"
     using delta_length delta_length'
@@ -180,11 +190,15 @@ proof -
       apply (metis imageI mem_Collect_eq snd_conv)+
     done
   then show ?thesis
-    by (auto simp add: max_fanout_def all_trans_def)
+    by (auto simp add: output_speed_def all_trans_def)
 qed
 
+(* buffer length *)
+
 lemma K': "K' = 5"
-  unfolding K'_def max_fanout by auto
+  unfolding K'_def output_speed by auto
+
+(* Figure 3 *)
 
 lemma step_1: "tdfa_step tdfa_init (Symb a, Symb a) (Some ([a], {(q0, 0)}), False, True)"
   "Some ([a], {(q0, 0)}) \<in> tdfa_Q"
@@ -328,7 +342,7 @@ proof -
     by auto
 qed
 
-lemma step_8: "tdfa_step (Some ([b, a, b], {(q1, 0), (q2, 1)})) (Symb a, EOF)
+lemma step_8: "tdfa_step (Some ([b, a, b], {(q1, 0), (q2, 1)})) (Symb a, Blank)
   (Some ([], {(qf, 0)}), True, False)"
   "Some ([], {(qf, 0)}) \<in> tdfa_Q"
 proof -
@@ -340,7 +354,7 @@ proof -
         intro: delta.intros act_qf)
   have drop_qs: "drop_qs 3 {(qf, 3)} = {(qf, 0)}"
     by (auto simp add: drop_qs_def)
-  show "tdfa_step (Some ([b, a, b], {(q1, 0), (q2, 1)})) (Symb a, EOF)
+  show "tdfa_step (Some ([b, a, b], {(q1, 0), (q2, 1)})) (Symb a, Blank)
     (Some ([], {(qf, 0)}), True, False)"
     using tdfa_step.intros(3)[OF step_7(2) upd_qs[symmetric], of 3]
     unfolding drop_qs K'
@@ -350,7 +364,7 @@ proof -
     by auto
 qed
 
-lemma step_9: "tdfa_step (Some ([], {(qf, 0)})) (EOF, EOF) (None, False, False)"
+lemma step_9: "tdfa_step (Some ([], {(qf, 0)})) (Blank, Blank) (None, False, False)"
   using tdfa_step.intros(1)[OF step_8(2)]
   by auto
 

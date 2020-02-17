@@ -2,7 +2,7 @@ theory Necessary
   imports Computation
 begin
 
-locale necessary = fnft: fNFT ninit n\<delta> naccept nQ + fTDFA init \<delta> accept Q
+locale necessary' = fnft: fNFT ninit n\<delta> naccept nQ + foTDFA init \<delta> accept Q
   for ninit :: "'s"
   and n\<delta> :: "'s \<Rightarrow> 'a :: finite \<Rightarrow> 's \<times> ('b :: finite) list \<Rightarrow> bool"
   and naccept :: "'s \<Rightarrow> bool"
@@ -14,8 +14,8 @@ locale necessary = fnft: fNFT ninit n\<delta> naccept nQ + fTDFA init \<delta> a
 assumes equiv: "fnft.\<tau> = \<tau>"
 begin
 
-interpretation flip: TDFA init "\<lambda>q (a, b) (q', b1, b2). \<delta> q (b, a) (q', b2, b1)" accept Q
-  using det finite_Q init_in_Q closed move_left move_right no_step
+interpretation flip: oTDFA init "\<lambda>q (a, b) (q', b1, b2). \<delta> q (b, a) (q', b2, b1)" accept Q
+  using det finite_Q init_in_Q closed move_left move_right no_step move_one
   apply unfold_locales
         apply auto
      apply fast+
@@ -31,35 +31,16 @@ lemma flip_comp_eq: "flip.computation q (bs, as) q' \<longleftrightarrow> q \<le
   using flip_comp_intro flip_comp_dest
   by auto
 
-lemmas flip_outs_Nil_dest = flip.outs_Nil_dest[unfolded flip_comp_eq]
-lemmas flip_outs_Cons_dest = flip.outs_Cons_dest[unfolded flip_comp_eq]
 lemmas flip_outs_Nil_intro = flip.outs_Nil_intro[unfolded flip_comp_eq]
 lemmas flip_outs_Cons_intro = flip.outs_Cons_intro[unfolded flip_comp_eq]
+lemmas flip_outs_Nil_dest = flip.outs_Nil_dest[unfolded flip_comp_eq]
+lemmas flip_outs_Cons_dest = flip.outs_Cons_dest[unfolded flip_comp_eq]
 
 lemma split_long:
-  assumes "length w \<ge> n + 1"
-  shows "\<exists>v' y z. w = v' @ y # z \<and> length z = n"
-proof -
-  obtain v' y z where split: "w = v' @ y # z" "length z \<ge> n"
-    using assms
-    by (metis Nat.le_diff_conv2 One_nat_def Suc_le_eq add_leD2 id_take_nth_drop length_drop)
-  then show ?thesis
-  proof (cases "length z > n")
-    case True
-    define z' where "z' = drop (length z - n) z"
-    define y' where "y' = z ! (length z - n - 1)"
-    have len_z': "length z' = n"
-      using True
-      by (auto simp add: z'_def)
-    have split': "w = (v' @ y # (take (length z - n - 1) z)) @ y' # z'"
-      using True
-      by (auto simp add: split(1) y'_def z'_def) (metis Suc_diff_Suc diff_Suc_less drop_Nil
-          id_take_nth_drop len_z' length_greater_0_conv nat_neq_iff z'_def)
-    show ?thesis
-      using split' len_z'
-      by fast
-  qed auto
-qed
+  assumes "length w \<ge> n"
+  shows "\<exists>v' v''. w = v' @ v'' \<and> length v'' = n"
+  using assms
+  by (metis append_take_drop_id diff_diff_cancel length_drop)
 
 lemma concat_filter: "length qbs = length xs \<Longrightarrow> length ns = length xs \<Longrightarrow>
   concat (map (\<lambda>(n, (q, bs), (bs', q')). bs) (filter (\<lambda>(n, (q, bs), (bs', q')). bs \<noteq> [])
@@ -137,56 +118,24 @@ next
 qed  
 
 lemma joint_rem:
-  assumes "fnft.computation s (as @ (if \<beta> then [case b of Symb b' \<Rightarrow> b'] else []), bs) s'"
-    "s \<in> nQ" "length bs \<ge> (3 + card nQ * card Q) * fnft.max_fanout"
-    "flip.outs a q (x # xs) q'' b \<beta>" "q \<in> Q"
-    "length xs \<ge> 1 + card nQ * card Q"
-    "as = map fst (x # xs)"
-  shows "\<exists>as' bs' xs'. fnft.computation s (as', bs') s' \<and> flip.outs a q (x # xs') q'' b \<beta> \<and>
-    length bs' < length bs \<and>
-    as' = map fst (x # xs') @ (if \<beta> then [case b of Symb b' \<Rightarrow> b'] else [])"
+  assumes "fnft.computation s (as, bs) s'"
+    "s \<in> nQ" "length bs > card nQ * card Q * fnft.output_speed"
+    "flip.outs a q xs q'' b" "q \<in> Q"
+    "length xs > card nQ * card Q"
+    "as = map fst xs"
+  shows "\<exists>as' bs' xs'. fnft.computation s (as', bs') s' \<and> flip.outs a q xs' q'' b \<and>
+    length bs' < length bs \<and> as' = map fst xs' \<and> safe_hd (map fst xs') = safe_hd (map fst xs)"
 proof -
-  obtain c cs where as_def: "as = c # cs"
-    using assms(7)
-    by (cases as) auto
-  have fst_x: "c = fst x"
-    using assms(7)
-    by (auto simp add: as_def)
-  obtain s'' ds ds' where step: "n\<delta> s c (s'', ds)"
-    "fnft.computation s'' (cs @ (if \<beta> then [case b of Symb b' \<Rightarrow> b'] else []), ds') s'"
-    "bs = ds @ ds'"
-    by (rule fnft.computation.cases[OF assms(1)[unfolded as_def]]) auto
-  obtain t'' es es' where lstep: "fnft.computation s'' (cs, es) t''"
-    "fnft.computation t'' (if \<beta> then [case b of Symb b' \<Rightarrow> b'] else [], es') s'" "ds' = es @ es'"
-    using fnft.computation_split[OF step(2)]
+  obtain qbs where qbs_def: "fnft.computation_ext s (as, qbs) s'" "bs = concat (map snd qbs)"
+    using fnft.computation_ext_complete[OF assms(1)]
     by auto
-  have s''_nQ: "s'' \<in> nQ"
-    using assms(2) step(1) fnft.\<delta>_closed
-    by blast
-  have len_es': "length es' \<le> fnft.max_fanout"
-    using fnft.max_fanout_step[OF fnft.comp_closed[OF lstep(1) s''_nQ]] lstep(2)
-    by (auto split: if_splits dest: fnft.no_step fnft.step_dest)
-  have len_es: "length es \<ge> (1 + card nQ * card Q) * fnft.max_fanout"
-  proof -
-    have "(3 + card nQ * card Q) * fnft.max_fanout \<le> length ds + length es + length es'"
-      using assms(3) step(3)[unfolded lstep(3)]
-      by auto
-    moreover have "\<dots> \<le> length es + fnft.max_fanout + fnft.max_fanout"
-      using fnft.max_fanout_step[OF assms(2) step(1)] len_es'
-      by auto
-    finally show ?thesis
-      by (simp add: numeral_Bit1)
-  qed
-  obtain qbs where qbs_def: "fnft.computation_ext s'' (cs, qbs) t''" "es = concat (map snd qbs)"
-    using fnft.computation_ext_complete[OF lstep(1)]
-    by auto
-  note qbs_max_fanout = fnft.max_fanout_ext_computation[OF qbs_def(1) s''_nQ]
+  note qbs_output_speed = fnft.output_speed_ext_computation[OF qbs_def(1) assms(2)]
   have len_qbs: "length qbs = length xs"
     using fnft.computation_ext_length[OF qbs_def(1)] assms(7)
-    by (auto simp add: as_def)
-  have len_qbs': "length qbs = length cs"
+    by auto
+  have len_qbs': "length qbs = length as"
     using assms(7) len_qbs
-    by (auto simp add: as_def)
+    by auto
   define qss where "qss = zip [0..<length qbs] (zip qbs xs)"
   have len_qss: "length qss = length qbs"
     using len_qbs
@@ -219,7 +168,7 @@ proof -
   have len_qs: "length qs = length qss'"
     by (auto simp add: qs_def)
   have qs_sub: "set qs \<subseteq> nQ \<times> Q"
-    using fnft.computation_ext_closed[OF qbs_def(1) s''_nQ] flip.outs_closed[OF assms(4,5)]
+    using fnft.computation_ext_closed[OF qbs_def(1) assms(2)] flip.outs_closed[OF assms(4,5)]
           len_qbs
     by (fastforce simp add: qs_def qss'_def qss_def dest: set_zip_leftD set_zip_rightD)
   have concat_qss': "concat (map (\<lambda>(n, (q, bs), (bs', q')). bs) qss') = concat (map snd qbs)"
@@ -229,15 +178,14 @@ proof -
   proof (rule ccontr)
     assume lassm: "\<not> length qs \<ge> 1 + card nQ * card Q"
     have "length (concat (map (\<lambda>(n, (q, bs), (bs', q')). bs) qss')) \<le>
-      length qss' * fnft.max_fanout"
-      apply (rule concat_length[of qss' fnft.max_fanout])
-      using qbs_max_fanout
+      length qss' * fnft.output_speed"
+      apply (rule concat_length[of qss' fnft.output_speed])
+      using qbs_output_speed
       by (auto simp add: qss'_def qss_def dest: set_zip_leftD set_zip_rightD)
     then show "False"
-      using fnft.max_fanout_pos
-      apply (auto simp add: arg_cong[OF concat_qss', of length] qbs_def(2)[symmetric])
-      by (metis (mono_tags, lifting) lassm dual_order.trans le_less_linear len_es len_qs
-          mult_le_cancel2 not_less_eq_eq)
+      using fnft.output_speed_pos assms(3) lassm less_le_trans
+      by (fastforce simp add: arg_cong[OF concat_qss', of length] qbs_def(2)[symmetric]
+          len_qs[symmetric])
   qed
   have not_distinct: "\<not> distinct qs"
   proof (rule ccontr)
@@ -289,14 +237,13 @@ proof -
     apply (auto split: prod.splits)
     by (metis in_set_conv_nth)
   obtain cs' cs'' cs''' c' c'' bs'a bs''' where new_comp:
-    "fnft.computation s'' (cs' @ c' # cs''', bs'a @ bs' @ bs''') t''"
+    "fnft.computation s (cs' @ c' # cs''', bs'a @ bs' @ bs''') s'"
     "bs'a = concat (map snd qbs')" "bs''' = concat (map snd qbs''')"
-    "cs = cs' @ c' # cs'' @ c'' # cs'''" "length cs' = length qbs'" "length cs'' = length qbs''"
+    "as = cs' @ c' # cs'' @ c'' # cs'''" "length cs' = length qbs'" "length cs'' = length qbs''"
     "length cs''' = length qbs'''"
     using fnft.computation_ext_rem[OF qbs_def(1)[unfolded decomp(1)[unfolded bs'_def bs''_def]]]
     by auto
-  have new_length: "length (ds @ bs'a @ bs' @ bs''' @ es') < length bs"
-    unfolding step(3) lstep(3)
+  have new_length: "length (bs'a @ bs' @ bs''') < length bs"
     apply (auto simp add: new_comp(2,3) qbs_def(2))
     apply (subst decomp(1))
     apply (auto simp add: bs'_def bs''_def)
@@ -314,151 +261,18 @@ proof -
   obtain ys'' where ys''_def: "xs ! n' = (ys'', snd qc)"
     using xs_map n_n'[unfolded len_qbs] qs_def len_qs qs_split_at(2) valid_idx(2)
     by (auto split: prod.splits)
-  have assoc: "flip.outs a q ((x # xs') @ (ys', snd qc) # xs'' @ (ys'', snd qc) # xs''') q'' b \<beta>"
+  have assoc: "flip.outs a q (xs' @ (ys', snd qc) # xs'' @ (ys'', snd qc) # xs''') q'' b"
     using assms(4)[unfolded decomp'(1)[unfolded ys'_def ys''_def]]
     by auto
   have "cs' @ c' # cs''' = map fst (xs' @ (ys', snd qc) # xs''')"
-    using new_comp(4,5,6,7)[unfolded decomp(2,3,4) len_qbs] decomp' assms(7)[unfolded as_def]
+    using new_comp(4,5,6,7)[unfolded decomp(2,3,4) len_qbs] decomp' assms(7)
     by (auto simp add: ys'_def ys''_def)
-  then show ?thesis
-    using fnft.comp_trans[OF fnft.step[OF step(1) new_comp(1)] lstep(2)]
-    using new_length flip.outs_rem[OF assoc, simplified] step(3)
-    by (fastforce simp add: fst_x)
-qed
-
-lemma conflict:
-  assumes "fnft.computation s (as, bs @ bs') s'" "r \<leadsto>(as, bs') r'" "s \<in> nQ" "r \<in> Q"
-    "length bs \<ge> (3 + card nQ * card Q) * fnft.max_fanout * (1 + length bs')"
-  shows "\<exists>as' bs''. fnft.computation s (as', bs'') s' \<and> r \<leadsto>(as', bs') r' \<and>
-    safe_hd as = safe_hd as' \<and> length bs'' < length (bs @ bs')"
-  using assms
-proof (induction bs' arbitrary: s as bs r)
-  case Nil
-  obtain xs q'' where outs: "flip.outs EOF r xs q'' EOF False"
-    "\<delta> q'' (EOF, EOF) (r', False, False)" "as = map fst xs"
-    using flip_outs_Nil_intro[OF Nil(2)]
+  moreover have "safe_hd (map fst (xs' @ (ys', snd qc) # xs''')) = safe_hd (map fst xs)"
+    using safe_hd_eq[OF decomp'(1)[unfolded ys'_def]]
     by auto
-  have len_as: "length as \<ge> 3 + card nQ * card Q"
-    using le_trans[OF Nil(5) fnft.max_fanout_computation[OF Nil(1,3), simplified]]
-          fnft.max_fanout_pos
-    by simp
-  obtain c cs where xs_def: "xs = c # cs"
-    using len_as outs(3)
-    by (cases xs) auto
-  have len_cs: "1 + card nQ * card Q \<le> length cs"
-    using outs(3) len_as
-    by (auto simp add: xs_def)
-  obtain as' bs'' xs' where rem: "fnft.computation s (as', bs'') s'"
-    "flip.outs EOF r (c # xs') q'' EOF False" "length bs'' < length bs"
-    "as' = map fst (c # xs')"
-    using joint_rem[OF _ Nil(3) _ outs(1)[unfolded xs_def] Nil(4) len_cs]
-          Nil(1,5) outs(3)[unfolded xs_def]
-    by force
-  have rem': "r \<leadsto>(map fst (c # xs'), []) r'"
-    using flip_outs_Nil_dest[OF rem(2), of r'] outs(2)
-    by auto
-  show ?case
-    using rem(1,3) rem' outs(3)
-    by (auto simp add: xs_def safe_hd_def rem(4) intro!: exI[of _ as'] exI[of _ bs''])
-next
-  case (Cons b bs')
-  obtain xs q'' ba \<beta> as' where outs: "flip.outs (Symb b) r xs q'' ba \<beta>" "q''\<leadsto>(as', bs')r'"
-    "(ba = EOF \<longrightarrow> \<not> \<beta>)" "(\<not> \<beta> \<longrightarrow> ba = flip.safe_hd as')"
-    "as = map fst xs @ (if \<beta> then (case ba of Symb b' \<Rightarrow> b') # as' else as')"
-    using flip_outs_Cons_intro[OF Cons(3)]
-    by blast
-  note q''_Q = flip.outs_closed'[OF outs(1) Cons(5)]
-  have len_as: "length as \<ge> (3 + card nQ * card Q) * (2 + length bs')"
-  proof -
-    have "(3 + card nQ * card Q) * (2 + length bs') * fnft.max_fanout \<le> length (bs @ b # bs')"
-      using Cons(6)
-      by (subst semiring_normalization_rules(16)) auto
-    then show ?thesis
-      using fnft.max_fanout_computation[OF Cons(2,4)] fnft.max_fanout_pos
-            le_trans mult_le_cancel2
-      by (metis (no_types, lifting) add_gr_0 le_Suc_ex less_one)
-  qed
-  have as_assoc: "as = (map fst xs @ (if \<beta> then [case ba of Symb b' \<Rightarrow> b'] else [])) @ as'"
-    using outs(5)
-    by auto
-  obtain q' ds ds' where split:
-    "fnft.computation s (map fst xs @ (if \<beta> then [case ba of Symb b' \<Rightarrow> b'] else []), ds) q'"
-    "fnft.computation q' (as', ds') s'"
-    "bs @ b # bs' = ds @ ds'"
-    using fnft.computation_split[OF Cons(2)[unfolded as_assoc]]
-    by auto
-  note q'_nQ = fnft.comp_closed[OF split(1) Cons(4)]
-  show ?case
-  proof (cases "(3 + card nQ * card Q) * fnft.max_fanout \<le> length ds")
-    case True
-    have len_as: "3 + card nQ * card Q \<le>
-      length (map fst xs @ (if \<beta> then [case ba of Symb b' \<Rightarrow> b'] else []))"
-    proof -
-      have "(3 + card nQ * card Q) * fnft.max_fanout \<le>
-        length (map fst xs @ (if \<beta> then [case ba of Symb b' \<Rightarrow> b'] else [])) * fnft.max_fanout"
-        using Cons(6) le_trans[OF True fnft.max_fanout_computation[OF split(1) Cons(4)]]
-        by auto
-      then show ?thesis
-        using fnft.max_fanout_pos mult_le_cancel2
-        by (metis (no_types, lifting) add_gr_0 le_Suc_ex less_one)
-    qed
-    obtain c cs where xs_def: "xs = c # cs"
-      using len_as outs(3)
-      by (cases xs) (auto split: if_splits)
-    have len_cs: "1 + card nQ * card Q \<le> length cs"
-      using len_as
-      by (auto simp add: xs_def split: if_splits)
-    obtain as'' bs'' xs' where rem:
-      "fnft.computation s (as'' @ (if \<beta> then [case ba of Symb b' \<Rightarrow> b'] else []), bs'') q'"
-      "flip.outs (Symb b) r (c # xs') q'' ba \<beta>" "length bs'' < length ds"
-      "as'' = map fst (c # xs')"
-      using joint_rem[OF split(1) Cons(4) True outs(1)[unfolded xs_def] Cons(5) len_cs]
-      by (auto simp add: xs_def)
-    note rem' = flip_outs_Cons_dest[OF rem(2) outs(2,3,4) refl]
-    show ?thesis
-      using fnft.comp_trans[OF rem(1) split(2)] rem' rem(3) outs(5)
-      by (auto simp add: safe_hd_def split(3) rem(4) xs_def
-          intro!: exI[of _ "fst c # map fst xs' @ _"] split: if_splits)
-  next
-    case False
-    have len_bs_ds: "length ds \<le> length (bs @ [b])"
-      using False Cons(6)
-      by auto
-    obtain es where es_def: "ds' = es @ bs'"
-      using split(3) split_app'[OF _ len_bs_ds]
-      by fastforce
-    have bs_ds_es: "bs @ [b] = ds @ es"
-      using split(3)[unfolded es_def]
-      by auto
-    have len_es: "(3 + card nQ * card Q) * fnft.max_fanout * (1 + length bs') \<le> length es"
-    proof -
-      have "(3 + card nQ * card Q) * fnft.max_fanout * (2 + length bs') \<le> length (bs @ [b])"
-        using Cons(6)
-        by auto
-      then have "(3 + card nQ * card Q) * fnft.max_fanout * (2 + length bs') \<le>
-        length ds + length es"
-        unfolding bs_ds_es
-        by auto
-      then show ?thesis
-        using False
-        by auto
-    qed
-    obtain as'' bs'' where rest: "fnft.computation q' (as'', bs'') s'" "q''\<leadsto>(as'', bs')r'"
-      "flip.safe_hd as' = flip.safe_hd as''" "length bs'' < length (es @ bs')"
-      using Cons(1)[OF split(2)[unfolded es_def] outs(2) q'_nQ q''_Q len_es]
-      by auto
-    have new_length: "length (ds @ bs'') < length (bs @ b # bs')"
-      using rest(4)
-      by (auto simp add: split(3) es_def)
-    have "safe_hd as = safe_hd (map fst xs @
-      (if \<beta> then (case ba of Symb b' \<Rightarrow> b') # as'' else as''))"
-      using rest(3)
-      by (cases xs) (auto simp add: outs(5) safe_hd_def split: list.splits)
-    then show ?thesis
-      using fnft.comp_trans[OF split(1) rest(1)] new_length
-            flip_outs_Cons_dest[OF outs(1) rest(2) outs(3) outs(4)[unfolded rest(3)] refl]
-      by fastforce
-  qed
+  ultimately show ?thesis
+    using new_comp(1) new_length flip.outs_rem[OF assoc, simplified]
+    by fastforce
 qed
 
 lemma card_nQ_pos: "card nQ \<ge> 1"
@@ -473,126 +287,245 @@ lemma card_nQ_Q_pos: "card nQ * card Q \<ge> 1"
   using card_nQ_pos card_Q_pos
   by auto
 
-lemma add_le_mult:
-  fixes x y :: nat
-  shows "x \<ge> 1 \<Longrightarrow> y \<ge> 1 \<Longrightarrow> x + y \<le> 2 * x * y"
-  by (simp add: add_le_mono distrib_left mult.commute mult_2_right)
+lemma mult_all: "x \<le> card nQ * card Q * fnft.output_speed * x"
+  using card_nQ_Q_pos fnft.output_speed_pos
+  by auto
 
-(* Theorem 8 *)
-lemma bounded: "\<exists>K. fnft.bounded K"
-proof (rule ccontr)
-  assume "\<not>(\<exists>K. fnft.bounded K)"
-  then obtain q q' t v w where unbounded: "fnft.computation ninit (t, v @ w) q"
-    "fnft.active q []" "fnft.computation ninit (t, v) q'" "fnft.active q' w"
-    "length w \<ge> (3 + card nQ * card Q) * fnft.max_fanout *
-    (3 + (2 + card nQ) * (2 + card Q + fnft.max_fanout)) +
-    (card nQ + 2) * (card Q + 2) + 1 + 1"
-    by (auto simp add: fnft.bounded_def) (metis less_or_eq_imp_le neqE)
-  note q_nQ = fnft.comp_closed[OF unbounded(1) fnft.init_in_Q]
-  note q'_nQ = fnft.comp_closed[OF unbounded(3) fnft.init_in_Q]
-  obtain u1 v1 nqf where ext: "fnft.computation q (u1, v1) nqf" "naccept nqf"
-    "length u1 \<le> card nQ" "length v1 \<le> card nQ * fnft.max_fanout"
-    using fnft.active_Nil_dest[OF unbounded(2) q_nQ]
+lemma conflict:
+  assumes "fnft.computation s (as, bs @ bs') s'" "r \<leadsto>(as, bs') r'" "s \<in> nQ" "r \<in> Q"
+    "length bs + length bs' > card nQ * card Q * fnft.output_speed * (1 + length bs')"
+  shows "\<exists>as' bs''. fnft.computation s (as', bs'') s' \<and> r \<leadsto>(as', bs') r' \<and>
+    safe_hd as = safe_hd as' \<and> length bs'' < length (bs @ bs')"
+  using assms
+proof (induction bs' arbitrary: s as bs r)
+  case Nil
+  obtain xs q'' where outs: "flip.outs Blank r xs q'' Blank"
+    "\<delta> q'' (Blank, Blank) (r', False, False)" "as = map fst xs"
+    using flip_outs_Nil_intro[OF Nil(2)]
     by auto
-  obtain u2 v2 nqf' where ext': "fnft.computation q' (u2, w @ v2) nqf'" "naccept nqf'"
-    "length v2 \<le> (1 + card nQ) * fnft.max_fanout"
-    using fnft.active_dest[OF unbounded(4) q'_nQ]
+  have len_as: "length as > card nQ * card Q"
+    using less_le_trans[OF Nil(5)[simplified]
+          fnft.output_speed_computation[OF Nil(1,3), simplified]]
+          fnft.output_speed_pos
     by auto
-  obtain u x where t_def: "t = u @ [x]"
-    using unbounded(1,5)
-    by (cases t rule: rev_cases) (auto dest: fnft.no_step)
-  have len_w: "length w \<ge> (card nQ + 2) * (card Q + 2) + 1 + 1"
-    using unbounded(5)
+  obtain as' bs'' xs' where rem: "fnft.computation s (as', bs'') s'"
+    "flip.outs Blank r xs' q'' Blank" "length bs'' < length bs"
+    "as' = map fst xs'" "safe_hd (map fst xs') = safe_hd (map fst xs)"
+    using joint_rem[OF Nil(1,3) _ outs(1) Nil(4) _ outs(3)] Nil(5) len_as[unfolded outs(3)]
     by auto
-  obtain v' y z where w_def: "w = v' @ y # z" "length z = (card nQ + 2) * (card Q + 2) + 1"
-    using split_long[OF len_w]
+  have rem': "r \<leadsto>(map fst xs', []) r'"
+    using flip_outs_Nil_dest[OF rem(2), of r'] outs(2)
     by auto
-  have "fnft.computation ninit (u @ x # u1, (v @ v') @ y # z @ v1) nqf"
-    using fnft.comp_trans[OF unbounded(1) ext(1), unfolded w_def t_def]
+  show ?case
+    using rem(1,3,5) rem' outs(3)
+    by (auto simp add: safe_hd_def rem(4) intro!: exI[of _ as'] exI[of _ bs''])
+next
+  case (Cons b bs')
+  obtain xs q'' ba as' where outs: "flip.outs (Symb b) r xs q'' ba" "q''\<leadsto>(as', bs')r'"
+    "ba = safe_hd as'"
+    "as = map fst xs @ as'"
+    using flip_outs_Cons_intro[OF Cons(3)]
     by auto
-  then obtain qf where qf_def: "init \<leadsto>(u @ x # u1, (v @ v') @ y # z @ v1) qf" "accept qf"
-    using ext(2) equiv
-    by (fastforce simp add: fnft.\<tau>_def \<tau>_def)
-  have "fnft.computation ninit (u @ x # u2, (v @ v') @ y # z @ v2) nqf'"
-    using fnft.comp_trans[OF unbounded(3) ext'(1), unfolded w_def t_def]
+  note q''_Q = flip.outs_closed'[OF outs(1) Cons(5)]
+  have len_as: "length as \<ge> card nQ * card Q * (2 + length bs')"
+  proof -
+    have "card nQ * card Q * (2 + length bs') * fnft.output_speed \<le> length (bs @ b # bs')"
+      using Cons(6)
+      by (subst semiring_normalization_rules(16)) auto
+    then show ?thesis
+      using fnft.output_speed_computation[OF Cons(2,4)] fnft.output_speed_pos
+      by (metis (no_types, lifting) One_nat_def Suc_le_eq le_trans mult_le_cancel2)
+  qed
+  obtain q' ds ds' where split:
+    "fnft.computation s (map fst xs, ds) q'"
+    "fnft.computation q' (as', ds') s'"
+    "bs @ b # bs' = ds @ ds'"
+    using fnft.computation_split[OF Cons(2)[unfolded outs(4)]]
     by auto
-  then obtain qf' where qf'_def: "init \<leadsto>(u @ x # u2, (v @ v') @ y # z @ v2) qf'" "accept qf'"
-    using ext'(2) equiv
-    by (fastforce simp add: fnft.\<tau>_def \<tau>_def)
-  show "False"
-    using first_reaches[OF reachable_init refl refl qf_def(1) qf'_def(1)]
-  proof (rule disjE)
-    assume "\<exists>r cs y' cs'. reachable r ([] @ u) ([] @ cs) (Symb x) (Symb y') \<and>
-      r \<leadsto>(x # u1, y' # cs' @ z @ v1) qf \<and> r \<leadsto>(x # u2, y' # cs' @ z @ v2) qf' \<and>
-      cs @ y' # cs' = (v @ v') @ [y]"
-    then obtain r cs y' cs' where tail: "reachable r u cs (Symb x) (Symb y')"
-      "r \<leadsto>(x # u1, y' # cs' @ z @ v1) qf"
-      by auto
-    have "length z \<ge> (length u1 + 2) * (card Q + 2) + 1"
-      unfolding w_def(2)
-      using add_le_mono[OF ext(3), OF order.refl, of 2] add_le_mono1 mult_le_mono1
-      by blast
-    then show "False"
-      using lin_bounded[OF tail(1,2) qf_def(2)]
-      by (auto simp add: safe_hd_def)
-  next
-    assume "\<exists>r cs x' cs'. reachable r ([] @ cs) ([] @ v @ v') (Symb x') (Symb y) \<and>
-      r \<leadsto>(x' # cs' @ u1, y # z @ v1) qf \<and> r \<leadsto>(x' # cs' @ u2, y # z @ v2) qf' \<and>
-      cs @ x' # cs' = u @ [x]"
-    then obtain r' cs x' cs' where tail': "reachable r' cs (v @ v') (Symb x') (Symb y)"
-      "r' \<leadsto>(x' # cs' @ u2, y # z @ v2) qf'" "cs @ x' # cs' = u @ [x]"
-      by auto
-    obtain g gs where u2_def: "u2 = g # gs"
-      using ext'(1)[unfolded w_def, simplified]
-      by (cases u2) (auto dest: fnft.no_step)
-    have comp: "r' \<leadsto>((x' # cs') @ g # gs, y # z @ v2) qf'"
-      using tail'(2)[unfolded u2_def]
-      by auto
-    obtain r ds y' ds' where tail: "reachable r (u @ [x]) (v @ v' @ ds) (Symb g) y'"
-      "r \<leadsto>(g # gs, ds') qf'" "y # z @ v2 = ds @ ds'" "y' = safe_hd ds'"
-      using comp_suf[OF tail'(1) _ _ comp]
-      by (auto simp add: safe_hd_def tail'(3))
-    have r_Q: "r \<in> Q"
-      using tail(1)
-      by (auto simp add: reachable_def)
-    have comp': "fnft.computation q' (g # gs, (v' @ ds) @ ds') nqf'"
-      using ext'(1)[unfolded w_def u2_def, simplified] tail(3)
-      by auto
-    have len_ds': "length ds' \<le> 2 + (2 + card nQ) * (2 + card Q + fnft.max_fanout)"
+  note q'_nQ = fnft.comp_closed[OF split(1) Cons(4)]
+  show ?case
+  proof (cases "card nQ * card Q * fnft.output_speed < length ds")
+    case True
+    have len_as: "card nQ * card Q < length (map fst xs)"
     proof -
-      have "length ds' \<le> 1 + length z + length v2"
-        using arg_cong[OF tail(3), of length]
+      have "card nQ * card Q * fnft.output_speed < length (map fst xs) * fnft.output_speed"
+        using Cons(6) less_le_trans[OF True fnft.output_speed_computation[OF split(1) Cons(4)]]
         by auto
-      also have "\<dots> \<le> 2 + (2 + card nQ) * (2 + card Q + fnft.max_fanout)"
-        using w_def(2) ext'(3)
-        by (auto simp add: distrib_left)
-      finally show ?thesis .
+      then show ?thesis
+        using fnft.output_speed_pos
+        by auto
     qed
-    have len_v': "(3 + card nQ * card Q) * fnft.max_fanout * (1 + length ds') \<le> length (v' @ ds)"
+    obtain as'' bs'' xs' where rem:
+      "fnft.computation s (as'', bs'') q'"
+      "flip.outs (Symb b) r xs' q'' ba" "length bs'' < length ds"
+      "as'' = map fst xs'" "safe_hd (map fst xs') = safe_hd (map fst xs)"
+      using joint_rem[OF split(1) Cons(4) True outs(1) Cons(5) _ refl] len_as
+      by auto
+    note rem' = flip_outs_Cons_dest[OF rem(2) outs(2,3) refl]
+    show ?thesis
+      using fnft.comp_trans[OF rem(1) split(2)] rem' rem(3) outs(4) safe_hd_app[OF rem(5)]
+      by (auto simp add: split(3) rem(4) intro!: exI[of _ "map fst xs' @ as'"] split: if_splits)
+  next
+    case False
+    have len_bs_ds: "length ds \<le> length (bs @ [b])"
+      using False mult_all[of "length (b # bs')"] Cons(6)
+      by auto
+    obtain es where es_def: "ds' = es @ bs'"
+      using split(3) split_app'[OF _ len_bs_ds]
+      by fastforce
+    have bs_ds_es: "bs @ [b] = ds @ es"
+      using split(3)[unfolded es_def]
+      by auto
+    have len_es: "card nQ * card Q * fnft.output_speed * (1 + length bs') < length es + length bs'"
     proof -
-      have "(3 + card nQ * card Q) * fnft.max_fanout * (1 + length ds') \<le>
-        (3 + card nQ * card Q) * fnft.max_fanout *
-        (1 + (2 + (2 + card nQ) * (2 + card Q + fnft.max_fanout)))"
-        using mult_le_mono2[OF add_le_mono[OF _ len_ds'], OF order.refl]
-        by fastforce
-      also have "\<dots> \<le> (3 + card nQ * card Q) * fnft.max_fanout *
-        (3 + (2 + card nQ) * (2 + card Q + fnft.max_fanout))"
-        unfolding add.assoc[symmetric]
-        by (metis less_or_eq_imp_le one_plus_numeral semiring_norm(3))
-      also have "\<dots> \<le> length v'"
-        using unbounded(5)[unfolded w_def(1)] w_def(2)
+      have "card nQ * card Q * fnft.output_speed * (1 + length bs') + length ds \<le>
+        card nQ * card Q * fnft.output_speed * (1 + length bs') +
+        card nQ * card Q * fnft.output_speed"
+        using False
+        by auto
+      also have "\<dots> < length ds + length es + length bs'"
+        using arg_cong[OF bs_ds_es, of length] Cons(6)
         by auto
       finally show ?thesis
         by auto
     qed
+    obtain as'' bs'' where rest: "fnft.computation q' (as'', bs'') s'" "q''\<leadsto>(as'', bs')r'"
+      "safe_hd as' = safe_hd as''" "length bs'' < length (es @ bs')"
+      using Cons(1)[OF split(2)[unfolded es_def] outs(2) q'_nQ q''_Q] len_es
+      by auto
+    have new_length: "length (ds @ bs'') < length (bs @ b # bs')"
+      using rest(4)
+      by (auto simp add: split(3) es_def)
+    have "safe_hd as = safe_hd (map fst xs @ as'')"
+      using safe_hd_app'[OF rest(3)[unfolded outs(4)]]
+      by (auto simp add: outs(4))
+    then show ?thesis
+      using fnft.comp_trans[OF split(1) rest(1)] new_length
+        flip_outs_Cons_dest[OF outs(1) rest(2) outs(3)[unfolded rest(3)] refl]
+      by fastforce
+  qed
+qed
+
+lemma bounded: "\<exists>K. fnft.bounded K"
+proof (rule ccontr)
+  (* home stretch *)
+  define h where "h = (fnft.sg + 1) * (card Q + 1)"
+  (* trail length *)
+  define t where "t = card nQ * card Q * fnft.output_speed *
+    (h + (fnft.sg + 1) * fnft.output_speed + 1)"
+  assume "\<not>(\<exists>K. fnft.bounded K)"
+  then obtain q q' u v w where unbounded: "fnft.computation ninit (u, v @ w) q"
+    "fnft.active q []" "fnft.computation ninit (u, v) q'" "fnft.active q' w"
+    "length w > t"
+    by (auto simp add: fnft.bounded_def) (metis less_or_eq_imp_le neqE)
+  note q_nQ = fnft.comp_closed[OF unbounded(1) fnft.init_in_Q]
+  note q'_nQ = fnft.comp_closed[OF unbounded(3) fnft.init_in_Q]
+  obtain u1 v1 nqf where ext: "fnft.computation q (u1, v1) nqf" "naccept nqf"
+    "length u1 \<le> fnft.sg" "length v1 \<le> fnft.sg * fnft.output_speed"
+    using fnft.active_Nil_dest_sg[OF unbounded(2) q_nQ]
+    by auto
+  obtain u2 v2 nqf' where ext': "fnft.computation q' (u2, w @ v2) nqf'" "naccept nqf'"
+    "length v2 \<le> (1 + fnft.sg) * fnft.output_speed"
+    using fnft.active_dest[OF unbounded(4) q'_nQ]
+    by auto
+  note len_w_gt = le_less_trans[OF mult_all[of "h + (fnft.sg + 1) * fnft.output_speed + 1"]
+      unbounded(5)[unfolded t_def]]
+  have len_w: "length w \<ge> h"
+    using len_w_gt
+    by auto
+  obtain v' v'' where w_def: "w = v' @ v''" "length v'' = h"
+    using split_long[OF len_w]
+    by auto
+  have "fnft.computation ninit (u @ u1, (v @ v') @ v'' @ v1) nqf"
+    using fnft.comp_trans[OF unbounded(1) ext(1), unfolded w_def]
+    by auto
+  then obtain qf where qf_def: "init \<leadsto>(u @ u1, (v @ v') @ v'' @ v1) qf" "accept qf"
+    using ext(2) equiv
+    by (fastforce simp add: fnft.\<tau>_def \<tau>_def)
+  have "fnft.computation ninit (u @ u2, (v @ v') @ v'' @ v2) nqf'"
+    using fnft.comp_trans[OF unbounded(3) ext'(1), unfolded w_def]
+    by auto
+  then obtain qf' where qf'_def: "init \<leadsto>(u @ u2, (v @ v') @ v'' @ v2) qf'" "accept qf'"
+    using ext'(2) equiv
+    by (fastforce simp add: fnft.\<tau>_def \<tau>_def)
+  have u_not_Nil: "u \<noteq> []"
+    using fnft.output_speed_computation[OF unbounded(1) fnft.init_in_Q] unbounded(5)[unfolded t_def]
+    by auto
+  have v''_not_Nil: "v'' \<noteq> []"
+    using w_def(2)[unfolded h_def]
+    by auto
+  then have safe_hd_v'': "safe_hd (v'' @ v1) = safe_hd (v'' @ v2)"
+    using safe_hd_app''[OF v''_not_Nil]
+    by auto
+  have reach_init: "reachable init [] [] (safe_hd (u @ u1)) (safe_hd ((v @ v') @ v'' @ v1))"
+    using reachable_init
+    by auto
+  have safe_hd_u1_u2: "safe_hd (u @ u1) = safe_hd (u @ u2)"
+    using safe_hd_app''[OF u_not_Nil]
+    by auto
+  show "False"
+    using first_reaches[OF reach_init safe_hd_u1_u2 safe_hd_v'' qf_def(1) qf'_def(1)]
+  proof (rule disjE)
+    assume "\<exists>r cs c cs'. reachable r ([] @ u) ([] @ cs) (safe_hd u1) c \<and>
+      r\<leadsto>(u1, cs' @ v'' @ v1)qf \<and> r\<leadsto>(u2, cs' @ v'' @ v2)qf' \<and> cs @ cs' = v @ v' \<and>
+      c = safe_hd (cs' @ v'' @ v1) \<and> c = safe_hd (cs' @ v'' @ v2)"
+    then obtain r cs c cs' where tail: "reachable r u cs (safe_hd u1) c"
+      "r \<leadsto>(u1, cs' @ v'' @ v1) qf" "c = safe_hd (cs' @ v'' @ v1)"
+      by (force simp add: safe_hd_def)
+    have le: "(length u1 + 1) * card Q \<le> (fnft.sg + 1) * card Q"
+      using ext(3)
+      by auto
+    show "False"
+      using le_trans[OF lin_bounded[OF tail(1,2) qf_def(2) refl tail(3)] le] w_def(2)
+      unfolding h_def
+      by auto
+  next
+    assume "\<exists>r cs c cs'. reachable r ([] @ cs) ([] @ v @ v') c (safe_hd (v'' @ v1)) \<and>
+      r\<leadsto>(cs' @ u1, v'' @ v1)qf \<and> r\<leadsto>(cs' @ u2, v'' @ v2)qf' \<and> cs @ cs' = u \<and>
+      c = safe_hd (cs' @ u1) \<and> c = safe_hd (cs' @ u2)"
+    then obtain r' cs c cs' where tail': "reachable r' cs (v @ v') c (safe_hd (v'' @ v1))"
+      "r' \<leadsto>(cs' @ u2, v'' @ v2) qf'" "cs @ cs' = u" "c = safe_hd (cs' @ u2)"
+      by auto
+    obtain f fs where u2_def: "u2 = f # fs"
+      using fnft.output_speed_computation[OF ext'(1) q'_nQ] len_w_gt
+      by (cases u2) auto
+    have comp: "r' \<leadsto>(cs' @ f # fs, v'' @ v2) qf'"
+      using tail'(2)[unfolded u2_def] .
+    have "c = safe_hd (cs' @ [f])"
+      using tail'(4)
+      by (auto simp add: u2_def safe_hd_def split: list.splits)
+         (metis Cons_eq_append_conv list.inject)
+    obtain r ds y' ds' where tail: "reachable r u (v @ v' @ ds) (Symb f) y'"
+      "r \<leadsto>(f # fs, ds') qf'" "v'' @ v2 = ds @ ds'" "y' = safe_hd ds'"
+      using comp_suf[OF tail'(1) _ safe_hd_v'' comp, OF tail'(4)[unfolded u2_def]]
+      by (auto simp add: safe_hd_def tail'(3))
+    have r_Q: "r \<in> Q"
+      using tail(1)
+      by (auto simp add: reachable_def)
+    have comp': "fnft.computation q' (f # fs, (v' @ ds) @ ds') nqf'"
+      using ext'(1)[unfolded w_def u2_def, simplified] tail(3)
+      by auto
+    have len_ds': "length ds' \<le> h + (fnft.sg + 1) * fnft.output_speed"
+      using arg_cong[OF tail(3), of length] w_def(2) ext'(3)
+      by auto
+    have len_v': "card nQ * card Q * fnft.output_speed * (1 + length ds') < length (v' @ ds @ ds')"
+    proof -
+      have "card nQ * card Q * fnft.output_speed * (1 + length ds') \<le> t"
+        using len_ds'
+        by (auto simp add: t_def)
+      also have "\<dots> < length (v' @ v'')"
+        using unbounded(5)[unfolded w_def(1)] .
+      finally show ?thesis
+        by (auto simp add: tail(3)[symmetric])
+    qed
     obtain as' bs'' where rem: "fnft.computation q' (as', bs'') nqf'" "r \<leadsto>(as', ds') qf'"
-      "flip.safe_hd (g # gs) = flip.safe_hd as'" "length bs'' < length ((v' @ ds) @ ds')"
-      using conflict[OF comp' tail(2) q'_nQ r_Q len_v']
+      "safe_hd (f # fs) = safe_hd as'" "length bs'' < length ((v' @ ds) @ ds')"
+      using conflict[OF comp' tail(2) q'_nQ r_Q] len_v'
       by auto
-    have wit1: "(u @ [x] @ as', v @ bs'') \<in> \<tau>"
-      using fnft.comp_trans[OF unbounded(3) rem(1), unfolded t_def] ext'(2) fnft.\<tau>_def equiv
+    have wit1: "(u @ as', v @ bs'') \<in> \<tau>"
+      using fnft.comp_trans[OF unbounded(3) rem(1)] ext'(2) fnft.\<tau>_def equiv
       by auto
-    have wit2: "(u @ [x] @ as', v @ v' @ ds @ ds') \<in> \<tau>"
+    have wit2: "(u @ as', v @ v' @ ds @ ds') \<in> \<tau>"
       using tail(1) rem(2) rem(3)[symmetric] tail(4)[symmetric] qf'_def(2)
       by (fastforce simp add: reachable_def \<tau>_def safe_hd_def split: list.splits)
     show "False"
@@ -600,6 +533,34 @@ proof (rule ccontr)
       by auto
   qed
 qed
+
+end
+
+locale necessary = fnft: fNFT ninit n\<delta> naccept nQ + fTDFA init \<delta> accept Q
+  for ninit :: "'s"
+  and n\<delta> :: "'s \<Rightarrow> 'a :: finite \<Rightarrow> 's \<times> ('b :: finite) list \<Rightarrow> bool"
+  and naccept :: "'s \<Rightarrow> bool"
+  and nQ :: "'s set"
+  and init :: "'t"
+  and \<delta> :: "'t \<Rightarrow> ('a :: finite) Al \<times> ('b :: finite) Al \<Rightarrow> 't \<times> bool \<times> bool \<Rightarrow> bool"
+  and accept :: "'t \<Rightarrow> bool"
+  and Q :: "'t set" +
+assumes equiv: "fnft.\<tau> = \<tau>"
+begin
+
+interpretation otdfa: oTDFA otdfa_init otdfa_delta otdfa_accept otdfa_Q
+  using otdfa_det otdfa_finite_Q otdfa_init_in_Q otdfa_closed[rotated]
+        otdfa_move_left otdfa_move_right otdfa_no_step otdfa_move_one
+  by unfold_locales auto
+
+interpretation nec: necessary' ninit n\<delta> naccept nQ otdfa_init otdfa_delta otdfa_accept otdfa_Q
+  using functional
+  by unfold_locales (auto simp add: equiv tdfa_equiv_otdfa)
+
+(* Theorem 10 *)
+
+lemma bounded: "\<exists>K. fnft.bounded K"
+  using nec.bounded .
 
 end
 
