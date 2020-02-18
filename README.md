@@ -6,6 +6,8 @@
 
 `thys/` contains the formalization of the paper in Isabelle
 
+`ICALP_2020_paper_112.pdf` is the paper submitted to ICALP 2020.
+
 ## Formalization in Isabelle
 
 The formal development can be browsed as a generated HTML page (see the html directory).
